@@ -27,7 +27,7 @@ import { calcXY } from './calculate';
 import { flushSync } from 'react-dom';
 import { layoutClassName } from './constant';
 import { isEqual } from 'lodash';
-import './index.css';
+import './grid.css';
 import 'react-resizable/css/styles.css';
 import type { DragEventHandler, ReactElement, ReactNode, FC } from 'react';
 import type { DragNativeEvent, DroppingPosition, RGLProps } from './type.rgl';

@@ -1,3 +1,3 @@
-export * from './resize';
-export * from './responsive';
-export * from './grid';
+export { default as ResizeGridLayout } from './resize';
+export { default as ResponsiveGridLayout } from './responsive';
+export { default as GridLayout } from './grid';

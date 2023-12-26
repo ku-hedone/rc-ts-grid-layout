@@ -24,7 +24,7 @@
 		"cjs": "tsc -p cjs.tsconfig.json",
 		"esm": "tsc -p esm.tsconfig.json",
 		"declare": "tsc -p declare.tsconfig.json",
-		"build": "pnpm run check && pnpm run clean && pnpm run cjs && pnpm run esm && pnpm run declare",
+		"build": "pnpm run check && pnpm run clean && pnpm run cjs && pnpm run esm && pnpm run declare && node cp-static.mjs",
 		"clean": "rimraf cjs esm typings",
 		"pre:build": "pnpm run clean",
 		"update:patch": "pnpm version patch",
@@ -37,6 +37,7 @@
 	"private": true,
 	"devDependencies": {
 		"@types/lodash": "^4.14.202",
+		"@types/node": "^18.19.3",
 		"@types/react": ">=18.x.x",
 		"@types/react-dom": ">=18.x.x",
 		"@types/react-resizable": "^3.0.7",
