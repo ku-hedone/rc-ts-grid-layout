@@ -1,4 +1,4 @@
 node_modules
-cjs/
-esm/
-typings/
+cjs
+esm
+typings

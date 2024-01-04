@@ -9,16 +9,18 @@ import type { Breakpoint, Breakpoints, ResponsiveLayout } from './type.responsiv
  * @return {String}       Highest breakpoint that is less than width.
  */
 export const getBreakpointFromWidth = <T extends Breakpoint>(
-  breakpoints: Breakpoints<T>,
-  width: number,
+	breakpoints: Breakpoints<T>,
+	width: number,
 ): T => {
-  const sorted = sortBreakpoints(breakpoints);
-  let matching = sorted[0];
-  for (let i = 1, len = sorted.length; i < len; i++) {
-    const breakpointName = sorted[i];
-    if (width > breakpoints[breakpointName]) matching = breakpointName;
-  }
-  return matching;
+	const sorted = sortBreakpoints(breakpoints);
+	let matching = sorted[0]!;
+	for (let i = 1, len = sorted.length; i < len; i++) {
+		const breakpointName = sorted[i];
+		if (breakpointName && width > breakpoints[breakpointName]) {
+			matching = breakpointName;
+		}
+	}
+	return matching;
 };
 
 /**
@@ -28,17 +30,17 @@ export const getBreakpointFromWidth = <T extends Breakpoint>(
  * @return {Number}            Number of cols.
  */
 export const getColsFromBreakpoint = <T extends Breakpoint>(
-  breakpoint: T,
-  cols: Breakpoints<T>,
+	breakpoint: T,
+	cols: Breakpoints<T>,
 ): number => {
-  if (!cols[breakpoint]) {
-    throw new Error(
-      'ResponsiveReactGridLayout: `cols` entry for breakpoint ' +
-        breakpoint +
-        ' is missing!',
-    );
-  }
-  return cols[breakpoint];
+	if (!cols[breakpoint]) {
+		throw new Error(
+			'ResponsiveReactGridLayout: `cols` entry for breakpoint ' +
+				breakpoint +
+				' is missing!',
+		);
+	}
+	return cols[breakpoint];
 };
 
 /**
@@ -56,28 +58,28 @@ export const getColsFromBreakpoint = <T extends Breakpoint>(
  * @return {Array}             New layout.
  */
 export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
-  layouts: ResponsiveLayout<T>,
-  breakpoints: Breakpoints<T>,
-  breakpoint: T,
-  lastBreakpoint: T,
-  cols: number,
-  compactType: CompactType,
+	layouts: ResponsiveLayout<T>,
+	breakpoints: Breakpoints<T>,
+	breakpoint: T,
+	lastBreakpoint: T,
+	cols: number,
+	compactType: CompactType,
 ): Layout => {
-  // If it already exists, just return it.
-  if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint]);
-  // Find or generate the next layout
-  let layout = layouts[lastBreakpoint];
-  const breakpointsSorted = sortBreakpoints(breakpoints);
-  const breakpointsAbove = breakpointsSorted.slice(breakpointsSorted.indexOf(breakpoint));
-  for (let i = 0, len = breakpointsAbove.length; i < len; i++) {
-    const b = breakpointsAbove[i];
-    if (layouts[b]) {
-      layout = layouts[b];
-      break;
-    }
-  }
-  layout = cloneLayout(layout || []); // clone layout so we don't modify existing items
-  return compact(correctBounds(layout, { cols }), compactType, cols);
+	// If it already exists, just return it.
+	if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint]);
+	// Find or generate the next layout
+	let layout = layouts[lastBreakpoint];
+	const breakpointsSorted = sortBreakpoints(breakpoints);
+	const breakpointsAbove = breakpointsSorted.slice(breakpointsSorted.indexOf(breakpoint));
+	for (let i = 0, len = breakpointsAbove.length; i < len; i++) {
+		const b = breakpointsAbove[i];
+		if (b && layouts[b]) {
+			layout = layouts[b];
+			break;
+		}
+	}
+	layout = cloneLayout(layout || []); // clone layout so we don't modify existing items
+	return compact(correctBounds(layout, { cols }), compactType, cols);
 };
 
 /**
@@ -88,8 +90,8 @@ export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
  * @return {Array}              Sorted breakpoints.
  */
 export const sortBreakpoints = <T extends Breakpoint>(
-  breakpoints: Breakpoints<T>,
+	breakpoints: Breakpoints<T>,
 ): T[] => {
-  const keys: T[] = Object.keys(breakpoints) as T[];
-  return keys.sort((a, b) => breakpoints[a] - breakpoints[b]);
+	const keys: T[] = Object.keys(breakpoints) as T[];
+	return keys.sort((a, b) => breakpoints[a] - breakpoints[b]);
 };
