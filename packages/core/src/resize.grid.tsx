@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import GridLayout from './grid';
 import { layoutClassName } from './constant';
 import type { RGLProps } from './type.rgl';
@@ -38,10 +38,12 @@ const ResizeGridLayout = ({
 				resizeObserver.current.disconnect();
 			}
 		};
-	});
+	}, []);
 
-	const cls = `${props.className || ''} ${layoutClassName}`.trim();
-
+	const cls = useMemo(
+		() => `${props.className || ''} ${layoutClassName}`.trim(),
+		[props.className],
+	);
 	if (measureBeforeMount && !mounted.current) {
 		return (
 			<div
@@ -51,7 +53,6 @@ const ResizeGridLayout = ({
 			/>
 		);
 	}
-
 	return (
 		<GridLayout
 			innerRef={ref}

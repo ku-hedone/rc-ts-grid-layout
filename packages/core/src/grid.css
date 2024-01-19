@@ -23,6 +23,7 @@
     transition: none;
     z-index: 1;
     will-change: width, height;
+    opacity: 0.9;
 }
 
 .react-grid-item.react-draggable-dragging {
@@ -184,9 +185,6 @@
     border: 1px solid black;
 }
 
-.react-grid-item.resizing {
-    opacity: 0.9;
-}
 
 .react-grid-item.static {
     background: #cce;

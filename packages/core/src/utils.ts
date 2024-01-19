@@ -2,7 +2,7 @@ import { deepEqual } from './equals';
 import { Children } from 'react';
 import type { ReactNode } from 'react';
 import type { CompactType, Layout, LayoutItem, Position } from './type';
-import type { ResizeCallbackData, ResizeHandle } from 'react-resizable';
+import type { ResizeHandle } from 'react-resizable';
 import type { DroppingPosition } from './type.rgl';
 
 type ResizeHandleFunc = (
@@ -313,7 +313,7 @@ export function compactItem(
 	compactType: CompactType,
 	cols: number,
 	fullLayout: Layout,
-	allowOverlap: boolean | null | undefined,
+	allowOverlap: boolean | undefined,
 ): LayoutItem {
 	const compactV = compactType === 'vertical';
 	const compactH = compactType === 'horizontal';
@@ -332,7 +332,7 @@ export function compactItem(
 			l.x--;
 		}
 	}
-	if (compactType === null && allowOverlap) {
+	if (!compactType && allowOverlap) {
 		return ensurePositivePosition(l);
 	}
 	// Move it down, and keep moving it down if it's colliding.
@@ -457,13 +457,13 @@ export function getStatics(layout: Layout): Array<LayoutItem> {
 export function moveElement(
 	layout: Layout,
 	l: LayoutItem,
-	x: number | null | undefined,
-	y: number | null | undefined,
-	isUserAction: boolean | undefined | null,
-	preventCollision: boolean | undefined | null,
+	x: number | undefined,
+	y: number | undefined,
+	isUserAction: boolean | undefined,
+	preventCollision: boolean | undefined,
 	compactType: CompactType,
 	cols: number,
-	allowOverlap?: boolean | null,
+	allowOverlap?: boolean,
 ): Layout {
 	// If this is static and not explicitly enabled as draggable,
 	// no move is possible, so we can short-circuit this immediately.
@@ -566,7 +566,7 @@ export function moveElementAwayFromCollision(
 	layout: Layout,
 	collidesWith: LayoutItem,
 	itemToMove: LayoutItem,
-	isUserAction: boolean | undefined | null,
+	isUserAction: boolean | undefined,
 	compactType: CompactType,
 	cols: number,
 ): Layout {
@@ -623,7 +623,7 @@ export function moveElementAwayFromCollision(
 				compactType,
 				cols,
 			);
-		} else if (collisionNorth && compactType == null) {
+		} else if (collisionNorth && !compactType) {
 			collidesWith.y = itemToMove.y;
 			itemToMove.y = itemToMove.y + itemToMove.h;
 
@@ -645,7 +645,7 @@ export function moveElementAwayFromCollision(
 	const newX = compactH ? itemToMove.x + 1 : undefined;
 	const newY = compactV ? itemToMove.y + 1 : undefined;
 
-	if (newX == null && newY == null) {
+	if (!newX && !newY) {
 		return layout;
 	}
 	return moveElement(
@@ -767,16 +767,16 @@ const ordinalResizeHandlerMap = {
 export function resizeItemInDirection(
 	direction: ResizeHandle,
 	currentSize: Position,
-	size: ResizeCallbackData['size'],
+	size: Position,
 	containerWidth: number,
 ): Position {
 	// Shouldn't be possible given types; that said, don't fail hard
-	// 只有 react-resizable 返回 异常 的 direction时 才会出现
-	// if (!ordinalHandler) {
-	//   console.log('!ordinalHandler', size);
-	//   return size;
-	// }
 	const ordinalHandler = ordinalResizeHandlerMap[direction];
+	// 只有 react-resizable 返回 异常 的 direction时 才会出现
+	if (!ordinalHandler) {
+		console.log('!ordinalHandler', size);
+		return size;
+	}
 
 	const res = ordinalHandler(currentSize, { ...currentSize, ...size }, containerWidth);
 	return res;
@@ -880,7 +880,7 @@ export function synchronizeLayoutWithChildren(
 			const g = child.props['data-grid'];
 			// Don't overwrite the layout item if it's already in the initial layout.
 			// If it has a `data-grid` property, prefer that over what's in the layout.
-			if (exists && g == null) {
+			if (exists && !g) {
 				layout.push(cloneLayoutItem(exists));
 			} else {
 				// Hey, this item has a data-grid property, use it.

@@ -13,6 +13,7 @@ import {
 	cloneLayoutItem,
 	compact,
 	fastRGLPropsEqual,
+	// fastRGLPropsEqual,
 	compactType as genCompactType,
 	getAllCollisions,
 	getLayoutItem,
@@ -41,6 +42,15 @@ type Rect = Pick<ItemProps, 'w' | 'h' | 'x' | 'y' | 'i'> & {
 
 type DragHandler = DragEventHandler<HTMLDivElement>;
 
+const defaultMargin = [10, 10] as [number, number];
+const defaultResizeHandles = ['se'] as ResizeHandle[];
+const defaultLayout = [] as Layout;
+const defaultDroppingItem = {
+	i: '__dropping-elem__',
+	h: 1,
+	w: 1,
+};
+
 const GridLayout: FC<RGLProps> = memo(
 	({
 		innerRef,
@@ -52,8 +62,8 @@ const GridLayout: FC<RGLProps> = memo(
 		draggableCancel = '',
 		rowHeight = 150,
 		maxRows = Infinity, // infinite vertical growth
-		layout = [],
-		margin = [10, 10] as [number, number],
+		layout = defaultLayout,
+		margin = defaultMargin,
 		isBounded = false,
 		isDraggable = true,
 		isResizable = true,
@@ -64,12 +74,8 @@ const GridLayout: FC<RGLProps> = memo(
 		verticalCompact = true,
 		compactType = 'vertical',
 		preventCollision = false,
-		droppingItem = {
-			i: '__dropping-elem__',
-			h: 1,
-			w: 1,
-		},
-		resizeHandles = ['se'] as ResizeHandle[],
+		droppingItem = defaultDroppingItem,
+		resizeHandles = defaultResizeHandles,
 		containerPadding,
 		children,
 		width,
@@ -84,6 +90,12 @@ const GridLayout: FC<RGLProps> = memo(
 		onResize = noop,
 		onResizeStop = noop,
 	}) => {
+		useEffect(() => {
+			return () => {
+				console.log('unmounted gird');
+			};
+		}, []);
+
 		const lastLayout = useRef<Layout>();
 		/**
 		 * previous item layout
@@ -103,6 +115,7 @@ const GridLayout: FC<RGLProps> = memo(
 				}),
 			[compactType, verticalCompact],
 		);
+
 		const latestLayout = useMemo(
 			() =>
 				synchronizeLayoutWithChildren(
@@ -123,6 +136,17 @@ const GridLayout: FC<RGLProps> = memo(
 		const [innerLayout, setInnerLayout] = useState<Layout>(() => {
 			return latestLayout;
 		});
+
+		const innerPropsRef = useRef({
+			layout: innerLayout,
+			compactType: innerCompactType,
+		});
+
+		innerPropsRef.current = {
+			layout: innerLayout,
+			compactType: innerCompactType,
+		};
+
 		const [rect, setRect] = useState<Rect>();
 		const [mounted, setMounted] = useState(false);
 
@@ -136,6 +160,7 @@ const GridLayout: FC<RGLProps> = memo(
 		}, [autoSize, containerPadding, innerLayout, margin, rowHeight]);
 		// gen a placeholder when resizing or moving
 		const placeholder = useMemo(() => {
+			// console.log('placeholder rect', rect);
 			if (rect) {
 				const { w, h, x, y, i } = rect;
 				const cls = `react-grid-placeholder ${
@@ -143,7 +168,7 @@ const GridLayout: FC<RGLProps> = memo(
 				}`.trim();
 				return (
 					<GridItem
-						key="placeholder"
+						key="grid-item-placeholder"
 						w={w}
 						h={h}
 						x={x}
@@ -161,7 +186,7 @@ const GridLayout: FC<RGLProps> = memo(
 						isBounded={false}
 						useCSSTransforms={useCSSTransforms}
 						transformScale={transformScale}>
-						<div />
+						<div key="item-placeholder" />
 					</GridItem>
 				);
 			}
@@ -340,7 +365,9 @@ const GridLayout: FC<RGLProps> = memo(
 
 		const onInnerDragStart: Required<ItemProps>['onDragStart'] = useCallback(
 			(i, _x, _y, { e, node }) => {
-				const item = getLayoutItem(innerLayout, i);
+				console.log('onInnerDragStart', i, _x, _y, e, node);
+				const item = getLayoutItem(innerPropsRef.current.layout, i);
+				// const item = getLayoutItem(innerLayout, i);
 				if (item) {
 					const { w, h, x, y } = item;
 					// Create placeholder (display only)
@@ -353,21 +380,27 @@ const GridLayout: FC<RGLProps> = memo(
 						i,
 					};
 					old.current = cloneLayoutItem(item);
-					lastLayout.current = innerLayout;
+					// lastLayout.current = innerLayout;
+					lastLayout.current = innerPropsRef.current.layout;
 					setRect(placeholder);
+					lastRect.current = placeholder;
 					if (typeof onDragStart === 'function') {
-						onDragStart(innerLayout, item, item, void 0, e, node);
+						// onDragStart(innerLayout, item, item, void 0, e, node);
+						onDragStart(innerPropsRef.current.layout, item, item, void 0, e, node);
 					} else {
 						console.warn('there is no onDragStart');
 					}
 				}
 			},
-			[innerLayout, onDragStart],
+			// [innerLayout, onDragStart],
+			[onDragStart],
 		);
 
 		const onInnerDrag: Required<ItemProps>['onDrag'] = useCallback(
 			(i, x, y, { e, node }) => {
-				const item = getLayoutItem(innerLayout, i);
+				console.log('onDrag');
+				const item = getLayoutItem(innerPropsRef.current.layout, i);
+				// const item = getLayoutItem(innerLayout, i);
 				if (item) {
 					/**
 					 * placeholder rect info
@@ -383,27 +416,35 @@ const GridLayout: FC<RGLProps> = memo(
 					// Move the element to the dragged location.
 					const isUserAction = true;
 					const currentLayout = moveElement(
-						innerLayout,
+						innerPropsRef.current.layout,
+						// innerLayout,
 						item,
 						x,
 						y,
 						isUserAction,
 						preventCollision,
-						innerCompactType,
+						// innerCompactType,
+						innerPropsRef.current.compactType,
 						cols,
 						allowOverlap,
 					);
-					flushSync(() => {
-						if (!isEqual(nextRect, lastRect.current)) {
-							setRect(nextRect);
-							lastRect.current = nextRect;
-						}
-						setInnerLayout(
-							allowOverlap
-								? currentLayout
-								: compact(currentLayout, innerCompactType, cols),
-						);
-					});
+					if (!isEqual(nextRect, lastRect.current)) {
+						setRect(nextRect);
+						lastRect.current = nextRect;
+					}
+					const nextInnerLayout = allowOverlap
+						? currentLayout
+						: // : compact(currentLayout, innerCompactType, cols);
+							compact(currentLayout, innerPropsRef.current.compactType, cols);
+					if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
+						setInnerLayout(nextInnerLayout);
+					}
+					// setInnerLayout(
+					// 	allowOverlap
+					// 		? currentLayout
+					// 		: // : compact(currentLayout, innerCompactType, cols);
+					// 			compact(currentLayout, innerPropsRef.current.compactType, cols),
+					// );
 					if (typeof onDrag === 'function') {
 						onDrag(currentLayout, old.current, item, nextRect, e, node);
 					} else {
@@ -411,34 +452,42 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[innerLayout, preventCollision, innerCompactType, cols, allowOverlap, onDrag],
+			// [innerLayout, preventCollision, innerCompactType, cols, allowOverlap, onDrag],
+			[preventCollision, cols, allowOverlap, onDrag],
 		);
 		const onInnerDragStop: Required<ItemProps>['onDragStop'] = useCallback(
 			(i, x, y, { e, node }) => {
-				// console.log('onDragStop');
+				console.log('onDragStop');
 				if (lastRect.current) {
-					const item = getLayoutItem(innerLayout, i);
+					const item = getLayoutItem(innerPropsRef.current.layout, i);
+					// const item = getLayoutItem(innerLayout, i);
 					if (item) {
 						// Move the element here
 						const isUserAction = true;
 						const currentLayout = moveElement(
-							innerLayout,
+							innerPropsRef.current.layout,
+							// innerLayout,
 							item,
 							x,
 							y,
 							isUserAction,
 							preventCollision,
-							innerCompactType,
+							innerPropsRef.current.compactType,
+							// innerCompactType,
 							cols,
 							allowOverlap,
 						);
 						const nextLayout = allowOverlap
 							? currentLayout
-							: compact(currentLayout, innerCompactType, cols);
+							: // : compact(currentLayout, innerCompactType, cols);
+								compact(currentLayout, innerPropsRef.current.compactType, cols);
 						old.current = void 0;
 						flushSync(() => {
 							setRect(void 0);
-							setInnerLayout(nextLayout);
+							if (!isEqual(innerPropsRef.current.layout, nextLayout)) {
+								setInnerLayout(nextLayout);
+							}
+							// setInnerLayout(nextLayout);
 						});
 						if (typeof onDragStop === 'function') {
 							onDragStop(nextLayout, old.current, item, void 0, e, node);
@@ -448,24 +497,29 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[allowOverlap, cols, innerCompactType, innerLayout, onDragStop, preventCollision],
+			// [allowOverlap, cols, innerCompactType, innerLayout, onDragStop, preventCollision],
+			[allowOverlap, cols, onDragStop, preventCollision],
 		);
 		// resize relation logic
 		const onInnerResizeStart: Required<ItemProps>['onResizeStart'] = useCallback(
 			(i, _w, _h, { e, node }) => {
-				const item = getLayoutItem(innerLayout, i);
+				// const item = getLayoutItem(innerLayout, i);
+				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				if (item) {
-					lastLayout.current = innerLayout;
+					// lastLayout.current = innerLayout;
+					lastLayout.current = innerPropsRef.current.layout;
 					old.current = cloneLayoutItem(item);
 					resizing.current = true;
 					if (typeof onResizeStart === 'function') {
-						onResizeStart(innerLayout, item, item, void 0, e, node);
+						// onResizeStart(innerLayout, item, item, void 0, e, node);
+						onResizeStart(innerPropsRef.current.layout, item, item, void 0, e, node);
 					} else {
 						console.warn('there is no onResizeStart');
 					}
 				}
 			},
-			[innerLayout, onResizeStart],
+			// [innerLayout, onResizeStart],
+			[onResizeStart],
 		);
 
 		const onInnerResize: Required<ItemProps>['onResize'] = useCallback(
@@ -474,52 +528,57 @@ const GridLayout: FC<RGLProps> = memo(
 				let x;
 				let y;
 				// console.log('onInnerResize innerLayout', JSON.stringify(innerLayout));
-				const [nextLayout, item] = withLayoutItem(innerLayout, i, function (l) {
-					let hasCollisions;
-					x = l.x;
-					y = l.y;
-					if (['sw', 'w', 'nw', 'n', 'ne'].indexOf(handle) !== -1) {
-						if (['sw', 'nw', 'w'].indexOf(handle) !== -1) {
-							x = l.x + (l.w - w);
-							w = l.x !== x && x < 0 ? l.w : w;
-							x = x < 0 ? 0 : x;
+				const [nextLayout, item] = withLayoutItem(
+					innerPropsRef.current.layout,
+					i,
+					function (l) {
+						// const [nextLayout, item] = withLayoutItem(innerLayout, i, function (l) {
+						let hasCollisions;
+						x = l.x;
+						y = l.y;
+						if (['sw', 'w', 'nw', 'n', 'ne'].indexOf(handle) !== -1) {
+							if (['sw', 'nw', 'w'].indexOf(handle) !== -1) {
+								x = l.x + (l.w - w);
+								w = l.x !== x && x < 0 ? l.w : w;
+								x = x < 0 ? 0 : x;
+							}
+
+							if (['ne', 'n', 'nw'].indexOf(handle) !== -1) {
+								y = l.y + (l.h - h);
+								h = l.y !== y && y < 0 ? l.h : h;
+								y = y < 0 ? 0 : y;
+							}
+							shouldMoveItem = true;
+						}
+						// Something like quad tree should be used
+						// to find collisions faster
+						if (preventCollision && !allowOverlap) {
+							const collisions = getAllCollisions(layout, {
+								...l,
+								w,
+								h,
+								x,
+								y,
+							}).filter((layoutItem) => layoutItem.i !== l.i);
+							hasCollisions = collisions.length > 0;
+
+							// If we're colliding, we need adjust the placeholder.
+							if (hasCollisions) {
+								// Reset layoutItem dimensions if there were collisions
+								y = l.y;
+								h = l.h;
+								x = l.x;
+								w = l.w;
+								shouldMoveItem = false;
+							}
 						}
 
-						if (['ne', 'n', 'nw'].indexOf(handle) !== -1) {
-							y = l.y + (l.h - h);
-							h = l.y !== y && y < 0 ? l.h : h;
-							y = y < 0 ? 0 : y;
-						}
-						shouldMoveItem = true;
-					}
-					// Something like quad tree should be used
-					// to find collisions faster
-					if (preventCollision && !allowOverlap) {
-						const collisions = getAllCollisions(layout, {
-							...l,
-							w,
-							h,
-							x,
-							y,
-						}).filter((layoutItem) => layoutItem.i !== l.i);
-						hasCollisions = collisions.length > 0;
+						l.w = w;
+						l.h = h;
 
-						// If we're colliding, we need adjust the placeholder.
-						if (hasCollisions) {
-							// Reset layoutItem dimensions if there were collisions
-							y = l.y;
-							h = l.h;
-							x = l.x;
-							w = l.w;
-							shouldMoveItem = false;
-						}
-					}
-
-					l.w = w;
-					l.h = h;
-
-					return l;
-				});
+						return l;
+					},
+				);
 				if (item) {
 					// Shouldn't ever happen, but typechecking makes it necessary
 					let finalLayout = nextLayout;
@@ -533,7 +592,8 @@ const GridLayout: FC<RGLProps> = memo(
 							y,
 							isUserAction,
 							preventCollision,
-							innerCompactType,
+							innerPropsRef.current.compactType,
+							// innerCompactType,
 							cols,
 							allowOverlap,
 						);
@@ -560,34 +620,48 @@ const GridLayout: FC<RGLProps> = memo(
 						}
 						const nextInnerLayout = allowOverlap
 							? finalLayout
-							: compact(finalLayout, innerCompactType, cols);
-
-						setInnerLayout(nextInnerLayout);
+							: // : compact(finalLayout, innerCompactType, cols);
+								compact(finalLayout, innerPropsRef.current.compactType, cols);
+						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
+							setInnerLayout(nextInnerLayout);
+						}
+						// setInnerLayout(nextInnerLayout);
 					});
 				}
 			},
-			[
-				allowOverlap,
-				cols,
-				innerCompactType,
-				innerLayout,
-				layout,
-				onResize,
-				preventCollision,
-			],
+			[allowOverlap, cols, layout, onResize, preventCollision],
+			// [
+			// 	allowOverlap,
+			// 	cols,
+			// 	innerCompactType,
+			// 	innerLayout,
+			// 	layout,
+			// 	onResize,
+			// 	preventCollision,
+			// ],
 		);
 		const onInnerResizeStop: Required<ItemProps>['onResizeStop'] = useCallback(
 			(i, _w, _h, { e, node }) => {
-				const item = getLayoutItem(innerLayout, i);
+				// const item = getLayoutItem(innerLayout, i);
+				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				const nextLayout = allowOverlap
-					? innerLayout
-					: compact(innerLayout, innerCompactType, cols);
+					? innerPropsRef.current.layout
+					: compact(
+							innerPropsRef.current.layout,
+							innerPropsRef.current.compactType,
+							cols,
+						);
+				// const nextLayout = allowOverlap
+				// 	? innerLayout
+				// 	: compact(innerLayout, innerCompactType, cols);
 				const previousItem = old.current;
 				lastRect.current = void 0;
 				old.current = void 0;
 				resizing.current = false;
 				flushSync(() => {
-					setInnerLayout(nextLayout);
+					if (!isEqual(innerPropsRef.current.layout, nextLayout)) {
+						setInnerLayout(nextLayout);
+					}
 					setRect(void 0);
 				});
 				if (typeof onResizeStop === 'function') {
@@ -596,13 +670,90 @@ const GridLayout: FC<RGLProps> = memo(
 					console.warn('there is no onResizeStop');
 				}
 			},
-			[allowOverlap, cols, innerCompactType, innerLayout, onResizeStop],
+			// [allowOverlap, cols, innerCompactType, innerLayout, onResizeStop],
+			[allowOverlap, cols, onResizeStop],
 		);
+
+		useEffect(() => {
+			console.log('cols update', cols);
+		}, [cols]);
+		useEffect(() => {
+			console.log('containerPadding update');
+		}, [containerPadding]);
+		useEffect(() => {
+			console.log('draggableCancel update');
+		}, [draggableCancel]);
+
+		useEffect(() => {
+			console.log('draggableHandle update');
+		}, [draggableHandle]);
+		useEffect(() => {
+			console.log('droppingPosition update');
+		}, [droppingPosition]);
+		useEffect(() => {
+			console.log('innerLayout update');
+		}, [innerLayout]);
+		useEffect(() => {
+			console.log('isBounded update');
+		}, [isBounded]);
+		useEffect(() => {
+			console.log('isDraggable update');
+		}, [isDraggable]);
+		useEffect(() => {
+			console.log('isResizable update');
+		}, [isResizable]);
+		useEffect(() => {
+			console.log('margin update');
+		}, [margin]);
+		useEffect(() => {
+			console.log('maxRows update');
+		}, [maxRows]);
+		useEffect(() => {
+			console.log('mounted update');
+		}, [mounted]);
+		useEffect(() => {
+			console.log('onInnerDrag update');
+		}, [onInnerDrag]);
+		useEffect(() => {
+			console.log('onInnerDragStart update');
+		}, [onInnerDragStart]);
+		useEffect(() => {
+			console.log('onInnerDragStop update');
+		}, [onInnerDragStop]);
+		useEffect(() => {
+			console.log('onInnerResize update');
+		}, [onInnerResize]);
+		useEffect(() => {
+			console.log('onInnerResizeStart update');
+		}, [onInnerResizeStart]);
+		useEffect(() => {
+			console.log('onInnerResizeStop update');
+		}, [onInnerResizeStop]);
+		useEffect(() => {
+			console.log('resizeHandle update');
+		}, [resizeHandle]);
+		useEffect(() => {
+			console.log('resizeHandles update');
+		}, [resizeHandles]);
+		useEffect(() => {
+			console.log('rowHeight update');
+		}, [rowHeight]);
+		useEffect(() => {
+			console.log('transformScale update');
+		}, [transformScale]);
+		useEffect(() => {
+			console.log('useCSSTransforms update');
+		}, [useCSSTransforms]);
+		useEffect(() => {
+			console.log('width update', width);
+		}, [width]);
 
 		const genGridItem = useCallback(
 			(child: ReactNode, isDrop?: boolean) => {
+				// console.log('processGridItem');
 				if (child && typeof child === 'object' && 'key' in child) {
-					const item = getLayoutItem(innerLayout, String(child.key));
+					// const item = getLayoutItem(innerLayout, String(child.key));
+					const item = getLayoutItem(innerPropsRef.current.layout, String(child.key));
 					if (!item) {
 						return null;
 					}
@@ -623,7 +774,7 @@ const GridLayout: FC<RGLProps> = memo(
 					const bounded = draggable && isBounded && item.isBounded !== false;
 					return (
 						<GridItem
-							key={`grid-item-${child.key}`}
+							key={`Grid-Item-${child.key}`}
 							containerWidth={width}
 							cols={cols}
 							margin={margin}
@@ -669,7 +820,7 @@ const GridLayout: FC<RGLProps> = memo(
 				draggableCancel,
 				draggableHandle,
 				droppingPosition,
-				innerLayout,
+				// innerLayout,
 				isBounded,
 				isDraggable,
 				isResizable,
@@ -690,6 +841,10 @@ const GridLayout: FC<RGLProps> = memo(
 				width,
 			],
 		);
+
+		useEffect(() => {
+			console.log('genGridItem update');
+		}, [genGridItem]);
 
 		const mergedStyle = useMemo(() => {
 			return {
@@ -715,7 +870,9 @@ const GridLayout: FC<RGLProps> = memo(
 			if (!mounted) {
 				setMounted(true);
 				// 初始化 layout 后 的 callback
-				onLayoutMaybeChanged(innerLayout, layout);
+				if (!isEqual(innerLayout, layout)) {
+					onLayoutMaybeChanged(innerLayout, layout);
+				}
 			}
 		}, [innerLayout, layout, mounted, onLayoutMaybeChanged]);
 
@@ -728,7 +885,7 @@ const GridLayout: FC<RGLProps> = memo(
 				lastLayout.current = void 0;
 			}
 		}, [innerLayout, mounted, onLayoutMaybeChanged]);
-
+		// console.log('placeholder', placeholder);
 		return (
 			<div
 				ref={innerRef}
@@ -738,9 +895,11 @@ const GridLayout: FC<RGLProps> = memo(
 				onDragLeave={isDroppable ? onInnerDragLeave : noop}
 				onDragEnter={isDroppable ? onInnerDragEnter : noop}
 				onDragOver={isDroppable ? onInnerDragOver : noop}>
-				{Children.map(children, (child) => genGridItem(child))}
-				{isDroppable && droppingDOM.current && genGridItem(droppingDOM.current, true)}
-				{placeholder}
+				<>
+					{Children.map(children, (child) => genGridItem(child))}
+					{isDroppable && droppingDOM.current && genGridItem(droppingDOM.current, true)}
+					{placeholder}
+				</>
 			</div>
 		);
 	},

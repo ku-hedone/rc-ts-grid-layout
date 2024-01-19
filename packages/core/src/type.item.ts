@@ -101,11 +101,11 @@ export type GenResizeParams = (
   updatedSize: Position;
 } | void;
 
-// export type GridInnerResizeHandler = (e: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => void;
+export type GridInnerResizeHandler = (e: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => void;
 
-export type GridInnerResizeHandler = (
-  position: Position,
-) => (e: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => void;
+// export type GridInnerResizeHandler = (
+//   position: Position,
+// ) => (e: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => void;
 
 export type InnerDragHandler = (e: DraggableEvent, data: Pick<DraggableData, 'node' | 'deltaX' | 'deltaY'>) => void | false;
 
