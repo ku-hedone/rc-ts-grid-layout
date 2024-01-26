@@ -24,7 +24,10 @@ export function calcGridItemPosition(
 	const { margin, containerPadding, rowHeight } = positionParams;
 	const colWidth = calcGridColWidth(positionParams);
 	const out: Position = {} as Position;
-
+	const padding =
+		Array.isArray(containerPadding) && containerPadding.length
+			? containerPadding
+			: margin;
 	if (state && state.resizing) {
 		out.width = Math.round(state.resizing.width);
 		out.height = Math.round(state.resizing.height);
@@ -37,8 +40,8 @@ export function calcGridItemPosition(
 		out.top = Math.round(state.dragging.top);
 		out.left = Math.round(state.dragging.left);
 	} else {
-		out.top = Math.round((rowHeight + margin[1]) * y + containerPadding[1]);
-		out.left = Math.round((colWidth + margin[0]) * x + containerPadding[0]);
+		out.top = Math.round((rowHeight + margin[1]) * y + padding[1]);
+		out.left = Math.round((colWidth + margin[0]) * x + padding[0]);
 	}
 
 	return out;

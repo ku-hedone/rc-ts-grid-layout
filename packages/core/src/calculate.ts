@@ -2,8 +2,15 @@ import type { PositionParams } from './type.calculate';
 
 // Helper for generating column width
 export function calcGridColWidth(positionParams: PositionParams): number {
+	// if containerPadding = [0,0] also has distance
+	// containerWidth = column width * cols + margin[0] * (cols + 1) + containerPadding[0] * 2
+	// column width = containerWidth - margin[0] * (cols + 1) - containerPadding[0] * 2
 	const { margin, containerPadding, containerWidth, cols } = positionParams;
-	return (containerWidth - margin[0] * (cols - 1) - containerPadding[0] * 2) / cols;
+	const paddingX =
+		Array.isArray(containerPadding) && containerPadding.length
+			? containerPadding[0]
+			: margin[0];
+	return (containerWidth - margin[0] * (cols - 1) - paddingX * 2) / cols;
 }
 
 // This can either be called:

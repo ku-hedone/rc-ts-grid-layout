@@ -115,17 +115,16 @@ const GridItem = (props: ItemProps) => {
 			useCSSTransforms,
 		],
 	);
-	const positionParams = useMemo(
-		() => ({
+	const positionParams = useMemo(() => {
+		return {
 			cols,
 			containerPadding,
 			containerWidth,
 			margin,
 			maxRows,
 			rowHeight,
-		}),
-		[cols, containerPadding, containerWidth, margin, maxRows, rowHeight],
-	);
+		};
+	}, [cols, containerPadding, containerWidth, margin, maxRows, rowHeight]);
 	const position = useMemo(
 		() =>
 			calcGridItemPosition(positionParams, x, y, w, h, {

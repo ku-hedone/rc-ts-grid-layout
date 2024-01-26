@@ -178,7 +178,7 @@ const GridLayout: FC<RGLProps> = memo(
 						containerWidth={width}
 						cols={cols}
 						margin={margin}
-						containerPadding={containerPadding || margin}
+						containerPadding={containerPadding}
 						maxRows={maxRows}
 						rowHeight={rowHeight}
 						isDraggable={false}
@@ -314,7 +314,7 @@ const GridLayout: FC<RGLProps> = memo(
 									maxRows,
 									rowHeight,
 									containerWidth: width,
-									containerPadding: containerPadding || margin,
+									containerPadding,
 								},
 								layerY,
 								layerX,
@@ -674,80 +674,6 @@ const GridLayout: FC<RGLProps> = memo(
 			[allowOverlap, cols, onResizeStop],
 		);
 
-		useEffect(() => {
-			console.log('cols update', cols);
-		}, [cols]);
-		useEffect(() => {
-			console.log('containerPadding update');
-		}, [containerPadding]);
-		useEffect(() => {
-			console.log('draggableCancel update');
-		}, [draggableCancel]);
-
-		useEffect(() => {
-			console.log('draggableHandle update');
-		}, [draggableHandle]);
-		useEffect(() => {
-			console.log('droppingPosition update');
-		}, [droppingPosition]);
-		useEffect(() => {
-			console.log('innerLayout update');
-		}, [innerLayout]);
-		useEffect(() => {
-			console.log('isBounded update');
-		}, [isBounded]);
-		useEffect(() => {
-			console.log('isDraggable update');
-		}, [isDraggable]);
-		useEffect(() => {
-			console.log('isResizable update');
-		}, [isResizable]);
-		useEffect(() => {
-			console.log('margin update');
-		}, [margin]);
-		useEffect(() => {
-			console.log('maxRows update');
-		}, [maxRows]);
-		useEffect(() => {
-			console.log('mounted update');
-		}, [mounted]);
-		useEffect(() => {
-			console.log('onInnerDrag update');
-		}, [onInnerDrag]);
-		useEffect(() => {
-			console.log('onInnerDragStart update');
-		}, [onInnerDragStart]);
-		useEffect(() => {
-			console.log('onInnerDragStop update');
-		}, [onInnerDragStop]);
-		useEffect(() => {
-			console.log('onInnerResize update');
-		}, [onInnerResize]);
-		useEffect(() => {
-			console.log('onInnerResizeStart update');
-		}, [onInnerResizeStart]);
-		useEffect(() => {
-			console.log('onInnerResizeStop update');
-		}, [onInnerResizeStop]);
-		useEffect(() => {
-			console.log('resizeHandle update');
-		}, [resizeHandle]);
-		useEffect(() => {
-			console.log('resizeHandles update');
-		}, [resizeHandles]);
-		useEffect(() => {
-			console.log('rowHeight update');
-		}, [rowHeight]);
-		useEffect(() => {
-			console.log('transformScale update');
-		}, [transformScale]);
-		useEffect(() => {
-			console.log('useCSSTransforms update');
-		}, [useCSSTransforms]);
-		useEffect(() => {
-			console.log('width update', width);
-		}, [width]);
-
 		const genGridItem = useCallback(
 			(child: ReactNode, isDrop?: boolean) => {
 				// console.log('processGridItem');
@@ -778,7 +704,7 @@ const GridLayout: FC<RGLProps> = memo(
 							containerWidth={width}
 							cols={cols}
 							margin={margin}
-							containerPadding={containerPadding || margin}
+							containerPadding={containerPadding}
 							maxRows={maxRows}
 							rowHeight={rowHeight}
 							cancel={draggableCancel}
