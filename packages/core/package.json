@@ -10,7 +10,9 @@
 		"cjs",
 		"esm",
 		"typings",
-		"src"
+		"src",
+		"LICENSE",
+		"README.md"
 	],
 	"keywords": [
 		"react",
@@ -34,7 +36,6 @@
 	},
 	"author": "jackqian",
 	"license": "MIT",
-	"private": true,
 	"devDependencies": {
 		"lodash": "^4.17.21",
 		"react": ">=18.x.x",
