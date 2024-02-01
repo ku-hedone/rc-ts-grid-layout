@@ -28,7 +28,7 @@ export type ResizeHandler = InnerHandler<SyntheticEvent>;
 export interface RGLProps {
 	rowHeight: number;
 	width: number;
-	layout: Layout;
+	layout?: Layout;
 	margin?: [number, number];
 	preventCollision: boolean;
 	useCSSTransforms: boolean;

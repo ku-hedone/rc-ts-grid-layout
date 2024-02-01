@@ -13,7 +13,6 @@ import {
 	cloneLayoutItem,
 	compact,
 	fastRGLPropsEqual,
-	// fastRGLPropsEqual,
 	compactType as genCompactType,
 	getAllCollisions,
 	getLayoutItem,
@@ -50,6 +49,16 @@ const defaultDroppingItem = {
 	h: 1,
 	w: 1,
 };
+
+// case 1
+// wrapper -> layout -> gird-layout
+// calc next-layout
+// if next-layout !== layout
+// callback onLayoutChange to update wrapper layout
+
+// case 2
+// update wrapper layout
+// grid-layout update inner-layout
 
 const GridLayout: FC<RGLProps> = memo(
 	({
@@ -96,7 +105,7 @@ const GridLayout: FC<RGLProps> = memo(
 			};
 		}, []);
 
-		const lastLayout = useRef<Layout>();
+		const lastLayout = useRef<Layout>(layout);
 		/**
 		 * previous item layout
 		 */
@@ -116,31 +125,26 @@ const GridLayout: FC<RGLProps> = memo(
 			[compactType, verticalCompact],
 		);
 
-		const latestLayout = useMemo(
-			() =>
-				synchronizeLayoutWithChildren(
-					layout,
-					children,
-					cols,
-					innerCompactType,
-					allowOverlap,
-				),
-			[allowOverlap, children, cols, innerCompactType, layout],
-		);
-
-		const latestLayoutRef = useRef<Layout>(latestLayout);
-
-		latestLayoutRef.current = latestLayout;
+		const latestLayout = useMemo(() => {
+			const next = synchronizeLayoutWithChildren(
+				layout,
+				children,
+				cols,
+				innerCompactType,
+				allowOverlap,
+			);
+			return next;
+		}, [allowOverlap, children, cols, innerCompactType, layout]);
 
 		const [droppingPosition, setDroppingPosition] = useState<DroppingPosition>();
-		const [innerLayout, setInnerLayout] = useState<Layout>(() => {
-			return latestLayout;
-		});
+		const [innerLayout, setInnerLayout] = useState<Layout>(latestLayout);
 
 		const innerPropsRef = useRef({
 			layout: innerLayout,
 			compactType: innerCompactType,
 		});
+
+		lastLayout.current = layout;
 
 		innerPropsRef.current = {
 			layout: innerLayout,
@@ -365,9 +369,7 @@ const GridLayout: FC<RGLProps> = memo(
 
 		const onInnerDragStart: Required<ItemProps>['onDragStart'] = useCallback(
 			(i, _x, _y, { e, node }) => {
-				console.log('onInnerDragStart', i, _x, _y, e, node);
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
-				// const item = getLayoutItem(innerLayout, i);
 				if (item) {
 					const { w, h, x, y } = item;
 					// Create placeholder (display only)
@@ -380,27 +382,21 @@ const GridLayout: FC<RGLProps> = memo(
 						i,
 					};
 					old.current = cloneLayoutItem(item);
-					// lastLayout.current = innerLayout;
-					lastLayout.current = innerPropsRef.current.layout;
 					setRect(placeholder);
 					lastRect.current = placeholder;
 					if (typeof onDragStart === 'function') {
-						// onDragStart(innerLayout, item, item, void 0, e, node);
 						onDragStart(innerPropsRef.current.layout, item, item, void 0, e, node);
 					} else {
 						console.warn('there is no onDragStart');
 					}
 				}
 			},
-			// [innerLayout, onDragStart],
 			[onDragStart],
 		);
 
 		const onInnerDrag: Required<ItemProps>['onDrag'] = useCallback(
 			(i, x, y, { e, node }) => {
-				console.log('onDrag');
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
-				// const item = getLayoutItem(innerLayout, i);
 				if (item) {
 					/**
 					 * placeholder rect info
@@ -417,13 +413,11 @@ const GridLayout: FC<RGLProps> = memo(
 					const isUserAction = true;
 					const currentLayout = moveElement(
 						innerPropsRef.current.layout,
-						// innerLayout,
 						item,
 						x,
 						y,
 						isUserAction,
 						preventCollision,
-						// innerCompactType,
 						innerPropsRef.current.compactType,
 						cols,
 						allowOverlap,
@@ -434,17 +428,10 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 					const nextInnerLayout = allowOverlap
 						? currentLayout
-						: // : compact(currentLayout, innerCompactType, cols);
-							compact(currentLayout, innerPropsRef.current.compactType, cols);
+						: compact(currentLayout, innerPropsRef.current.compactType, cols);
 					if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
 						setInnerLayout(nextInnerLayout);
 					}
-					// setInnerLayout(
-					// 	allowOverlap
-					// 		? currentLayout
-					// 		: // : compact(currentLayout, innerCompactType, cols);
-					// 			compact(currentLayout, innerPropsRef.current.compactType, cols),
-					// );
 					if (typeof onDrag === 'function') {
 						onDrag(currentLayout, old.current, item, nextRect, e, node);
 					} else {
@@ -452,7 +439,6 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			// [innerLayout, preventCollision, innerCompactType, cols, allowOverlap, onDrag],
 			[preventCollision, cols, allowOverlap, onDrag],
 		);
 		const onInnerDragStop: Required<ItemProps>['onDragStop'] = useCallback(
@@ -460,13 +446,11 @@ const GridLayout: FC<RGLProps> = memo(
 				console.log('onDragStop');
 				if (lastRect.current) {
 					const item = getLayoutItem(innerPropsRef.current.layout, i);
-					// const item = getLayoutItem(innerLayout, i);
 					if (item) {
 						// Move the element here
 						const isUserAction = true;
 						const currentLayout = moveElement(
 							innerPropsRef.current.layout,
-							// innerLayout,
 							item,
 							x,
 							y,
@@ -479,15 +463,14 @@ const GridLayout: FC<RGLProps> = memo(
 						);
 						const nextLayout = allowOverlap
 							? currentLayout
-							: // : compact(currentLayout, innerCompactType, cols);
-								compact(currentLayout, innerPropsRef.current.compactType, cols);
+							: compact(currentLayout, innerPropsRef.current.compactType, cols);
 						old.current = void 0;
+						lastRect.current = void 0;
 						flushSync(() => {
 							setRect(void 0);
 							if (!isEqual(innerPropsRef.current.layout, nextLayout)) {
 								setInnerLayout(nextLayout);
 							}
-							// setInnerLayout(nextLayout);
 						});
 						if (typeof onDragStop === 'function') {
 							onDragStop(nextLayout, old.current, item, void 0, e, node);
@@ -497,28 +480,22 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			// [allowOverlap, cols, innerCompactType, innerLayout, onDragStop, preventCollision],
 			[allowOverlap, cols, onDragStop, preventCollision],
 		);
 		// resize relation logic
 		const onInnerResizeStart: Required<ItemProps>['onResizeStart'] = useCallback(
 			(i, _w, _h, { e, node }) => {
-				// const item = getLayoutItem(innerLayout, i);
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				if (item) {
-					// lastLayout.current = innerLayout;
-					lastLayout.current = innerPropsRef.current.layout;
 					old.current = cloneLayoutItem(item);
 					resizing.current = true;
 					if (typeof onResizeStart === 'function') {
-						// onResizeStart(innerLayout, item, item, void 0, e, node);
 						onResizeStart(innerPropsRef.current.layout, item, item, void 0, e, node);
 					} else {
 						console.warn('there is no onResizeStart');
 					}
 				}
 			},
-			// [innerLayout, onResizeStart],
 			[onResizeStart],
 		);
 
@@ -527,12 +504,10 @@ const GridLayout: FC<RGLProps> = memo(
 				let shouldMoveItem = false;
 				let x;
 				let y;
-				// console.log('onInnerResize innerLayout', JSON.stringify(innerLayout));
 				const [nextLayout, item] = withLayoutItem(
 					innerPropsRef.current.layout,
 					i,
 					function (l) {
-						// const [nextLayout, item] = withLayoutItem(innerLayout, i, function (l) {
 						let hasCollisions;
 						x = l.x;
 						y = l.y;
@@ -620,29 +595,17 @@ const GridLayout: FC<RGLProps> = memo(
 						}
 						const nextInnerLayout = allowOverlap
 							? finalLayout
-							: // : compact(finalLayout, innerCompactType, cols);
-								compact(finalLayout, innerPropsRef.current.compactType, cols);
+							: compact(finalLayout, innerPropsRef.current.compactType, cols);
 						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
 							setInnerLayout(nextInnerLayout);
 						}
-						// setInnerLayout(nextInnerLayout);
 					});
 				}
 			},
 			[allowOverlap, cols, layout, onResize, preventCollision],
-			// [
-			// 	allowOverlap,
-			// 	cols,
-			// 	innerCompactType,
-			// 	innerLayout,
-			// 	layout,
-			// 	onResize,
-			// 	preventCollision,
-			// ],
 		);
 		const onInnerResizeStop: Required<ItemProps>['onResizeStop'] = useCallback(
 			(i, _w, _h, { e, node }) => {
-				// const item = getLayoutItem(innerLayout, i);
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				const nextLayout = allowOverlap
 					? innerPropsRef.current.layout
@@ -651,9 +614,6 @@ const GridLayout: FC<RGLProps> = memo(
 							innerPropsRef.current.compactType,
 							cols,
 						);
-				// const nextLayout = allowOverlap
-				// 	? innerLayout
-				// 	: compact(innerLayout, innerCompactType, cols);
 				const previousItem = old.current;
 				lastRect.current = void 0;
 				old.current = void 0;
@@ -670,16 +630,13 @@ const GridLayout: FC<RGLProps> = memo(
 					console.warn('there is no onResizeStop');
 				}
 			},
-			// [allowOverlap, cols, innerCompactType, innerLayout, onResizeStop],
 			[allowOverlap, cols, onResizeStop],
 		);
 
 		const genGridItem = useCallback(
 			(child: ReactNode, isDrop?: boolean) => {
-				// console.log('processGridItem');
 				if (child && typeof child === 'object' && 'key' in child) {
-					// const item = getLayoutItem(innerLayout, String(child.key));
-					const item = getLayoutItem(innerPropsRef.current.layout, String(child.key));
+					const item = getLayoutItem(innerLayout, String(child.key));
 					if (!item) {
 						return null;
 					}
@@ -746,7 +703,6 @@ const GridLayout: FC<RGLProps> = memo(
 				draggableCancel,
 				draggableHandle,
 				droppingPosition,
-				// innerLayout,
 				isBounded,
 				isDraggable,
 				isResizable,
@@ -765,12 +721,9 @@ const GridLayout: FC<RGLProps> = memo(
 				transformScale,
 				useCSSTransforms,
 				width,
+				innerLayout,
 			],
 		);
-
-		useEffect(() => {
-			console.log('genGridItem update');
-		}, [genGridItem]);
 
 		const mergedStyle = useMemo(() => {
 			return {
@@ -789,29 +742,24 @@ const GridLayout: FC<RGLProps> = memo(
 			if (!lastRect.current) {
 				setInnerLayout(latestLayout);
 			}
-		}, [layout, compactType, children, latestLayout]);
+		}, [latestLayout]);
 
 		// init layout
 		useLayoutEffect(() => {
 			if (!mounted) {
 				setMounted(true);
-				// 初始化 layout 后 的 callback
-				if (!isEqual(innerLayout, layout)) {
-					onLayoutMaybeChanged(innerLayout, layout);
-				}
 			}
-		}, [innerLayout, layout, mounted, onLayoutMaybeChanged]);
+		}, [mounted]);
 
 		useEffect(() => {
-			const previousLayout = lastLayout.current;
-			if (mounted && previousLayout) {
+			// const previousLayout = lastLayout.current;
+			if (mounted) {
 				// Possibly call back with layout on mount. This should be done after correcting the layout width
 				// to ensure we don't rerender with the wrong width.
-				onLayoutMaybeChanged(innerLayout, previousLayout);
-				lastLayout.current = void 0;
+				onLayoutMaybeChanged(innerLayout, lastLayout.current);
 			}
 		}, [innerLayout, mounted, onLayoutMaybeChanged]);
-		// console.log('placeholder', placeholder);
+
 		return (
 			<div
 				ref={innerRef}

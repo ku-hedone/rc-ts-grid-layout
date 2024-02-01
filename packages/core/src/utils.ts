@@ -863,20 +863,20 @@ export function sortLayoutItemsByColRow(layout: Layout): Layout {
  * @return {Array}                Working layout.
  */
 export function synchronizeLayoutWithChildren(
-	initialLayout: Layout,
+	initialLayout: Layout | undefined,
 	children: ReactNode,
 	cols: number,
 	compactType: CompactType,
 	allowOverlap?: boolean,
 ): Layout {
-	initialLayout = initialLayout || [];
+	const innerLayout = initialLayout || [];
 
 	// Generate one layout item per child.
 	const layout: LayoutItem[] = [];
 	Children.forEach(children, (child) => {
 		// Child may not exist
 		if (typeof child === 'object' && child && 'key' in child && child.key !== null) {
-			const exists = getLayoutItem(initialLayout, child.key + '');
+			const exists = getLayoutItem(innerLayout, child.key + '');
 			const g = child.props['data-grid'];
 			// Don't overwrite the layout item if it's already in the initial layout.
 			// If it has a `data-grid` property, prefer that over what's in the layout.
