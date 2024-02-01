@@ -18,23 +18,43 @@ const layout = _.map(new Array(items), (_, i) => {
 
 const Case = () => {
 	const [state, setState] = useState<Layout>(layout);
+	const onAddItem = useCallback(() => {
+		setState((prev) => [
+			...(prev || []),
+			{
+				i: (prev ? prev.length : 0) + '',
+				x: ((prev ? prev.length : 0) * 2) % 12,
+				y: Infinity, // puts it at the bottom
+				w: 2,
+				h: 2,
+			},
+		]);
+	}, []);
+
+	const onRemoveItem = useCallback(
+		(i: string) => () => {
+			setState((prev) => (prev ? prev.filter((item) => item.i !== i) : []));
+		},
+		[],
+	);
 
 	const onInnerLayoutChange = useCallback((layout: Layout) => {
 		setState(layout);
 	}, []);
 
 	const gen = useCallback(() => {
-		return _.map(_.range(items), (i) => {
+		return _.map(state, (item) => {
 			return (
-				<div key={i}>
-					<span className="text">{i}</span>
+				<div key={item.i}>
+					<span className="text">{item.i}</span>
+					<button onClick={onRemoveItem(item.i)}>remove</button>
 				</div>
 			);
 		});
-	}, []);
+	}, [state, onRemoveItem]);
 
 	const stringifyLayout = useMemo(() => {
-		return state.map(function (l) {
+		return (state || []).map(function (l) {
 			return (
 				<div
 					className="layoutItem"
@@ -50,12 +70,13 @@ const Case = () => {
 			<div className="layoutJSON">
 				Displayed as <code>[x, y, w, h]</code>:
 				<div className="columns">{stringifyLayout}</div>
+				<button onClick={onAddItem}>add</button>
 			</div>
 			<ResizeGridLayout
 				className="layout"
 				layout={state}
 				onLayoutChange={onInnerLayoutChange}
-				rowHeight={30}
+				rowHeight={50}
 				cols={12}
 				preventCollision={false}
 				useCSSTransforms>
