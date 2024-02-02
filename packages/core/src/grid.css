@@ -2,7 +2,6 @@
     position: relative;
     transition: height 200ms ease;
     background: #eee;
-    margin-top: 10px;
 }
 
 .react-grid-item {
