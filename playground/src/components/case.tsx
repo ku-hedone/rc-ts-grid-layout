@@ -1,9 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { ResizeGridLayout } from '@hedone/rc-ts-grid-layout';
-import { Layout } from '@hedone/rc-ts-grid-layout/typings/type';
+import type { Layout, LayoutItem } from '@hedone/rc-ts-grid-layout/typings/type';
 
 const items = 20;
+const resizeHandles = [
+	'w',
+	'e',
+	's',
+	'n',
+	'sw',
+	'nw',
+	'se',
+	'ne',
+] as Required<LayoutItem>['resizeHandles'];
 
 const layout = _.map(new Array(items), (_, i) => {
 	const y = Math.ceil(Math.random() * 4) + 1;
@@ -79,7 +89,8 @@ const Case = () => {
 				rowHeight={50}
 				cols={12}
 				preventCollision={false}
-				useCSSTransforms>
+				useCSSTransforms
+				resizeHandles={resizeHandles}>
 				{gen()}
 			</ResizeGridLayout>
 		</div>
