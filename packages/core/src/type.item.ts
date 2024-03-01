@@ -18,6 +18,17 @@ type GridResizeEvent = {
 
 type GridItemCallback<T> = (i: string, w: number, h: number, Data: T) => void;
 
+export interface Resizing {
+	top: number;
+	left: number;
+	width: number;
+	height: number;
+}
+export interface Dragging {
+	top: number;
+	left: number;
+}
+
 export interface ItemProps {
 	children: ReactElement<{
 		className: string;

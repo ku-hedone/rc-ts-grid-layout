@@ -16,26 +16,17 @@ import { calcGridItemPosition, createStyle } from './utils.item';
 import { isEqual } from 'lodash';
 import type { FC, ReactNode } from 'react';
 import type {
+	Dragging,
 	GenResizeParams,
 	GridInnerResizeHandler,
 	InnerDragHandler,
 	InnerDragStartHandler,
 	InnerDragStopHandler,
 	ItemProps,
+	Resizing,
 } from './type.item';
 import type { PartialPosition, Position } from './type';
 import type { DroppingPosition } from './type.rgl';
-
-interface Resizing {
-	top: number;
-	left: number;
-	width: number;
-	height: number;
-}
-interface Dragging {
-	top: number;
-	left: number;
-}
 
 const GridItem = (props: ItemProps) => {
 	const {
@@ -125,14 +116,11 @@ const GridItem = (props: ItemProps) => {
 			rowHeight,
 		};
 	}, [cols, containerPadding, containerWidth, margin, maxRows, rowHeight]);
-	const position = useMemo(
-		() =>
-			calcGridItemPosition(positionParams, x, y, w, h, {
-				resizing,
-				dragging,
-			}),
-		[dragging, h, positionParams, resizing, w, x, y],
-	);
+
+	const position = useMemo(() => {
+		const state = resizing ? { resizing } : dragging ? { dragging } : void 0;
+		return calcGridItemPosition(positionParams, x, y, w, h, state);
+	}, [dragging, h, positionParams, resizing, w, x, y]);
 
 	const innerProps = useRef({
 		positionParams,
@@ -253,7 +241,6 @@ const GridItem = (props: ItemProps) => {
 				y,
 				handle,
 			);
-
 			return {
 				w: clamp(w, Math.max(minW, 1), maxW),
 				h: clamp(h, minH, maxH),
@@ -272,9 +259,6 @@ const GridItem = (props: ItemProps) => {
 					const { node, handle } = data;
 					const { w, h, updatedSize: size } = nextResize;
 					onResize(i, w, h, { e, node, size, handle });
-					if (i === '3' || i === '1') {
-						console.log('onGridResize', size);
-					}
 					setResizing(size);
 				}
 			}
@@ -282,7 +266,6 @@ const GridItem = (props: ItemProps) => {
 		[genResizeParams, i, onResize],
 	);
 	const onGridResizeStart: GridInnerResizeHandler = useCallback(
-		// (position) => (e, data) => {
 		(e, data) => {
 			const position = currentPosition.current;
 			if (position) {
