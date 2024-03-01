@@ -37,13 +37,14 @@ import type { ResizeHandle } from 'react-resizable';
 
 type Rect = Pick<ItemProps, 'w' | 'h' | 'x' | 'y' | 'i'> & {
 	from: 'drag' | 'resize';
+	static: true;
 };
 
 type DragHandler = DragEventHandler<HTMLDivElement>;
 
 const defaultMargin = [10, 10] as [number, number];
-const defaultResizeHandles = ['se'] as ResizeHandle[];
-const defaultLayout = [] as Layout;
+const defaultResizeHandles: ResizeHandle[] = ['se'];
+const defaultLayout: Layout = [];
 const defaultDroppingItem = {
 	i: '__dropping-elem__',
 	h: 1,
@@ -95,7 +96,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onDrag = noop,
 		onDragStart = noop,
 		onDragStop = noop,
-		onResizeStart,
+		onResizeStart = noop,
 		onResize = noop,
 		onResizeStop = noop,
 	}) => {
@@ -380,6 +381,7 @@ const GridLayout: FC<RGLProps> = memo(
 						y,
 						from: 'drag',
 						i,
+						static: true,
 					};
 					old.current = cloneLayoutItem(item);
 					setRect(placeholder);
@@ -408,6 +410,7 @@ const GridLayout: FC<RGLProps> = memo(
 						y: item.y,
 						from: 'drag',
 						i,
+						static: true,
 					};
 					// Move the element to the dragged location.
 					const isUserAction = true;
@@ -422,16 +425,19 @@ const GridLayout: FC<RGLProps> = memo(
 						cols,
 						allowOverlap,
 					);
-					if (!isEqual(nextRect, lastRect.current)) {
-						setRect(nextRect);
-						lastRect.current = nextRect;
-					}
-					const nextInnerLayout = allowOverlap
-						? currentLayout
-						: compact(currentLayout, innerPropsRef.current.compactType, cols);
-					if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
-						setInnerLayout(nextInnerLayout);
-					}
+					flushSync(() => {
+						const nextInnerLayout = allowOverlap
+							? currentLayout
+							: compact(currentLayout, innerPropsRef.current.compactType, cols);
+						if (!isEqual(nextRect, lastRect.current)) {
+							setRect(nextRect);
+							lastRect.current = nextRect;
+						}
+
+						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
+							setInnerLayout(nextInnerLayout);
+						}
+					});
 					if (typeof onDrag === 'function') {
 						onDrag(currentLayout, old.current, item, nextRect, e, node);
 					} else {
@@ -443,7 +449,6 @@ const GridLayout: FC<RGLProps> = memo(
 		);
 		const onInnerDragStop: Required<ItemProps>['onDragStop'] = useCallback(
 			(i, x, y, { e, node }) => {
-				console.log('onDragStop');
 				if (lastRect.current) {
 					const item = getLayoutItem(innerPropsRef.current.layout, i);
 					if (item) {
@@ -457,7 +462,6 @@ const GridLayout: FC<RGLProps> = memo(
 							isUserAction,
 							preventCollision,
 							innerPropsRef.current.compactType,
-							// innerCompactType,
 							cols,
 							allowOverlap,
 						);
@@ -507,20 +511,20 @@ const GridLayout: FC<RGLProps> = memo(
 				const [nextLayout, item] = withLayoutItem(
 					innerPropsRef.current.layout,
 					i,
-					function (l) {
+					(item) => {
 						let hasCollisions;
-						x = l.x;
-						y = l.y;
+						x = item.x;
+						y = item.y;
 						if (['sw', 'w', 'nw', 'n', 'ne'].indexOf(handle) !== -1) {
 							if (['sw', 'nw', 'w'].indexOf(handle) !== -1) {
-								x = l.x + (l.w - w);
-								w = l.x !== x && x < 0 ? l.w : w;
+								x = item.x + (item.w - w);
+								w = item.x !== x && x < 0 ? item.w : w;
 								x = x < 0 ? 0 : x;
 							}
 
 							if (['ne', 'n', 'nw'].indexOf(handle) !== -1) {
-								y = l.y + (l.h - h);
-								h = l.y !== y && y < 0 ? l.h : h;
+								y = item.y + (item.h - h);
+								h = item.y !== y && y < 0 ? item.h : h;
 								y = y < 0 ? 0 : y;
 							}
 							shouldMoveItem = true;
@@ -528,30 +532,30 @@ const GridLayout: FC<RGLProps> = memo(
 						// Something like quad tree should be used
 						// to find collisions faster
 						if (preventCollision && !allowOverlap) {
-							const collisions = getAllCollisions(layout, {
-								...l,
+							const collisions = getAllCollisions(innerPropsRef.current.layout, {
+								...item,
 								w,
 								h,
 								x,
 								y,
-							}).filter((layoutItem) => layoutItem.i !== l.i);
+							}).filter((layoutItem) => layoutItem.i !== item.i);
 							hasCollisions = collisions.length > 0;
 
 							// If we're colliding, we need adjust the placeholder.
 							if (hasCollisions) {
 								// Reset layoutItem dimensions if there were collisions
-								y = l.y;
-								h = l.h;
-								x = l.x;
-								w = l.w;
+								y = item.y;
+								h = item.h;
+								x = item.x;
+								w = item.w;
 								shouldMoveItem = false;
 							}
 						}
 
-						l.w = w;
-						l.h = h;
+						item.w = w;
+						item.h = h;
 
-						return l;
+						return item;
 					},
 				);
 				if (item) {
@@ -568,7 +572,6 @@ const GridLayout: FC<RGLProps> = memo(
 							isUserAction,
 							preventCollision,
 							innerPropsRef.current.compactType,
-							// innerCompactType,
 							cols,
 							allowOverlap,
 						);
@@ -581,28 +584,29 @@ const GridLayout: FC<RGLProps> = memo(
 						y: item.y,
 						i,
 						from: 'resize',
+						static: true,
 					};
 					if (typeof onResize === 'function') {
 						onResize(finalLayout, old.current, item, placeholder, e, node);
 					} else {
 						console.warn('there is no onResize');
 					}
-					// Re-compact the newLayout and set the drag placeholder.
 					flushSync(() => {
+						const nextInnerLayout = allowOverlap
+							? finalLayout
+							: compact(finalLayout, innerPropsRef.current.compactType, cols);
+						// Re-compact the newLayout and set the drag placeholder.
 						if (!isEqual(lastRect.current, placeholder)) {
 							setRect(placeholder);
 							lastRect.current = placeholder;
 						}
-						const nextInnerLayout = allowOverlap
-							? finalLayout
-							: compact(finalLayout, innerPropsRef.current.compactType, cols);
 						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
 							setInnerLayout(nextInnerLayout);
 						}
 					});
 				}
 			},
-			[allowOverlap, cols, layout, onResize, preventCollision],
+			[allowOverlap, cols, onResize, preventCollision],
 		);
 		const onInnerResizeStop: Required<ItemProps>['onResizeStop'] = useCallback(
 			(i, _w, _h, { e, node }) => {

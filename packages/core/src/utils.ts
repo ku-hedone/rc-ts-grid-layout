@@ -743,10 +743,13 @@ const resizeSouth: ResizeHandleFunc = (currentSize, { top, left, height, width }
 
 const resizeNorthEast: ResizeHandleFunc = (...args) =>
 	resizeNorth(args[0], resizeEast(...args), args[2]);
+
 const resizeNorthWest: ResizeHandleFunc = (...args) =>
 	resizeNorth(args[0], resizeWest(...args), args[2]);
+
 const resizeSouthEast: ResizeHandleFunc = (...args) =>
 	resizeSouth(args[0], resizeEast(...args), args[2]);
+
 const resizeSouthWest: ResizeHandleFunc = (...args) =>
 	resizeSouth(args[0], resizeWest(...args), args[2]);
 
