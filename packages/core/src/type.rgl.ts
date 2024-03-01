@@ -26,12 +26,12 @@ export type DragHandler = InnerHandler<DraggableEvent>;
 export type ResizeHandler = InnerHandler<SyntheticEvent>;
 
 export interface RGLProps {
-	rowHeight: number;
 	width: number;
+	rowHeight?: number;
 	layout?: Layout;
 	margin?: [number, number];
-	preventCollision: boolean;
-	useCSSTransforms: boolean;
+	preventCollision?: boolean;
+	useCSSTransforms?: boolean;
 
 	className?: string;
 	style?: CSSProperties;

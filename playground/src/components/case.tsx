@@ -88,9 +88,8 @@ const Case = () => {
 				onLayoutChange={onInnerLayoutChange}
 				rowHeight={50}
 				cols={12}
-				preventCollision={false}
-				useCSSTransforms
-				resizeHandles={resizeHandles}>
+				resizeHandles={resizeHandles}
+				verticalCompact={false}>
 				{gen()}
 			</ResizeGridLayout>
 		</div>
