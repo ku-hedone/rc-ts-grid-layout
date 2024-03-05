@@ -13,7 +13,7 @@ import type { Breakpoint, ResponsiveLayout, ResponsiveRGLProps } from './type.re
 const defaultProps = {
 	breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
 	cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
-	layouts: {} as any,
+	layouts: {} as ResponsiveLayout<Breakpoint>,
 	margin: [10, 10] as [number, number],
 	allowOverlap: false,
 };
@@ -107,8 +107,8 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 				let nextLayout = findOrGenerateResponsiveLayout(
 					{ ...innerLayouts.current },
 					breakpoints,
-					layouts,
 					nextBreakpoint,
+					state.breakpoint,
 					nextCols,
 					compactType,
 				);
@@ -183,10 +183,12 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 	// Handler for layout change
 	const onInnerLayoutChange = useCallback(
 		(layout: Layout) => {
-			onLayoutChange(layout, {
-				...layouts,
-				[state.breakpoint]: layout,
-			});
+			if (typeof onLayoutChange === 'function') {
+				onLayoutChange(layout, {
+					...layouts,
+					[state.breakpoint]: layout,
+				});
+			}
 		},
 		[state.breakpoint, layouts, onLayoutChange],
 	);
