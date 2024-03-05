@@ -48,14 +48,13 @@ export const getColsFromBreakpoint = <T extends Breakpoint>(
  *
  * This finds the layout above the new one and generates from it, if it exists.
  *
- * @param  {Object} layouts     Existing layouts.
- * @param  {Array} breakpoints All breakpoints.
- * @param  {String} breakpoint New breakpoint.
- * @param  {String} breakpoint Last breakpoint (for fallback).
+ * @param  {ResponsiveLayout<Breakpoint>} layouts     Existing layouts.
+ * @param  {Breakpoints<Breakpoint>} breakpoints All breakpoints.
+ * @param  {String} breakpoint Current breakpoint.
+ * @param  {String} lastBreakpoint Last breakpoint (for fallback).
  * @param  {Number} cols       Column count at new breakpoint.
- * @param  {Boolean} verticalCompact Whether or not to compact the layout
- *   vertically.
- * @return {Array}             New layout.
+ * @param  {CompactType} compactType  Current compactType
+ * @return {Layout}             New layout.
  */
 export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
 	layouts: ResponsiveLayout<T>,
@@ -66,7 +65,9 @@ export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
 	compactType: CompactType,
 ): Layout => {
 	// If it already exists, just return it.
-	if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint]);
+	if (layouts[breakpoint]) {
+		return cloneLayout(layouts[breakpoint]);
+	}
 	// Find or generate the next layout
 	let layout = layouts[lastBreakpoint];
 	const breakpointsSorted = sortBreakpoints(breakpoints);
