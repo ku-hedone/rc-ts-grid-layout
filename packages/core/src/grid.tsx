@@ -99,6 +99,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onResizeStart = noop,
 		onResize = noop,
 		onResizeStop = noop,
+		mergeStyle = false,
 	}) => {
 		useEffect(() => {
 			return () => {
@@ -730,11 +731,14 @@ const GridLayout: FC<RGLProps> = memo(
 		);
 
 		const mergedStyle = useMemo(() => {
-			return {
-				height: containerHeight,
-				...style,
-			};
-		}, [containerHeight, style]);
+			if (mergeStyle) {
+				return {
+					height: containerHeight,
+					...style,
+				};
+			}
+			return style;
+		}, [mergeStyle, containerHeight, style]);
 
 		const mergedClassName = useMemo(
 			() => `${layoutClassName} ${className || ''}`.trimEnd(),

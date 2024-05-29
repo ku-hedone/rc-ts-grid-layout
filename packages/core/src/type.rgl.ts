@@ -33,6 +33,8 @@ export interface RGLProps {
 	preventCollision?: boolean;
 	useCSSTransforms?: boolean;
 
+	mergeStyle?: boolean;
+
 	className?: string;
 	style?: CSSProperties;
 	autoSize?: boolean;
