@@ -185,7 +185,8 @@ export const fastRGLPropsEqual = (
 		isEqualImpl(a.style, b.style) &&
 		isEqualImpl(a.containerPadding, b.containerPadding) &&
 		isEqualImpl(a.droppingItem, b.droppingItem) &&
-		isEqualImpl(a.innerRef, b.innerRef)
+		isEqualImpl(a.innerRef, b.innerRef) &&
+		isEqualImpl(a.wrapperProps, b.wrapperProps)
 	);
 };
 

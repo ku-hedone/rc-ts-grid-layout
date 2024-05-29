@@ -75,5 +75,9 @@ export interface RGLProps {
 	) => void;
 	//
 	children: ReactNode;
+	wrapperProps?: {
+		style?: CSSProperties;
+		className?: string;
+	};
 	innerRef?: Ref<HTMLDivElement>;
 }

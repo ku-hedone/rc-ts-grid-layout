@@ -1,4 +1,4 @@
-import type { ReactElement, CSSProperties, SyntheticEvent, RefObject } from 'react';
+import type { CSSProperties, SyntheticEvent, ReactNode } from 'react';
 import type { ResizableProps, ResizeCallbackData, ResizeHandle } from 'react-resizable';
 import type { DroppingPosition } from './type.rgl';
 import type { DraggableEvent, DraggableData } from 'react-draggable';
@@ -30,11 +30,7 @@ export interface Dragging {
 }
 
 export interface ItemProps {
-	children: ReactElement<{
-		className: string;
-		style: CSSProperties;
-		ref: RefObject<HTMLDivElement>;
-	}>;
+	children: ReactNode;
 	cols: number;
 	containerWidth: number;
 	margin: [number, number];

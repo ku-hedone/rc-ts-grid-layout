@@ -101,6 +101,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onResizeStop = noop,
 		mergeStyle = false,
 		attributes = {},
+		wrapperProps = {},
 	}) => {
 		useEffect(() => {
 			return () => {
@@ -193,7 +194,10 @@ const GridLayout: FC<RGLProps> = memo(
 						isBounded={false}
 						useCSSTransforms={useCSSTransforms}
 						transformScale={transformScale}>
-						<div key="item-placeholder" />
+						<div
+							key="item-placeholder"
+							{...wrapperProps}
+						/>
 					</GridItem>
 				);
 			}
@@ -208,6 +212,7 @@ const GridLayout: FC<RGLProps> = memo(
 			transformScale,
 			useCSSTransforms,
 			width,
+			wrapperProps,
 		]);
 
 		const onLayoutMaybeChanged = useCallback(
@@ -696,7 +701,8 @@ const GridLayout: FC<RGLProps> = memo(
 							static={item.static}
 							droppingPosition={isDrop ? droppingPosition : undefined}
 							resizeHandles={resizeHandlesOptions}
-							resizeHandle={resizeHandle}>
+							resizeHandle={resizeHandle}
+							{...wrapperProps}>
 							{child}
 						</GridItem>
 					);
@@ -728,6 +734,7 @@ const GridLayout: FC<RGLProps> = memo(
 				useCSSTransforms,
 				width,
 				innerLayout,
+				wrapperProps,
 			],
 		);
 

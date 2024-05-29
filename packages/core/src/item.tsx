@@ -1,13 +1,4 @@
-import {
-	Children,
-	cloneElement,
-	memo,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { Children, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DraggableCore } from 'react-draggable';
 import { Resizable } from 'react-resizable';
 import { fastGridItemPropsEqual, resizeItemInDirection } from './utils';
@@ -83,7 +74,6 @@ const GridItem = (props: ItemProps) => {
 		() =>
 			[
 				'react-grid-item',
-				children.props.className,
 				className,
 				props.static ? 'static' : '',
 				isDraggable ? 'react-draggable' : '',
@@ -96,7 +86,6 @@ const GridItem = (props: ItemProps) => {
 				.join(' ')
 				.trim(),
 		[
-			children.props.className,
 			className,
 			dragging,
 			resizing,
@@ -379,19 +368,19 @@ const GridItem = (props: ItemProps) => {
 				transformScale={transformScale}
 				resizeHandles={resizeHandles}
 				handle={resizeHandle}>
-				{cloneElement(children, {
-					ref,
-					className: cls,
-					style: {
+				<div
+					ref={ref}
+					className={cls}
+					style={{
 						...props.style,
-						...children.props.style,
 						...createStyle(position, {
 							containerWidth,
 							usePercentages,
 							useCSSTransforms,
 						}),
-					},
-				})}
+					}}>
+					{children}
+				</div>
 			</Resizable>
 		</DraggableCore>
 	);
