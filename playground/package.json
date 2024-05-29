@@ -10,8 +10,8 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"@vitejs/plugin-react-swc": "^3.5.0",
-		"vite": "^5.0.8"
+		"@vitejs/plugin-react-swc": "^3.6.0",
+		"vite": "^5.2.8"
 	},
 	"dependencies": {
 		"@hedone/rc-ts-grid-layout": "workspace:^"
