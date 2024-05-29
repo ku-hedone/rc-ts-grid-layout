@@ -34,6 +34,7 @@ export interface RGLProps {
 	useCSSTransforms?: boolean;
 
 	mergeStyle?: boolean;
+	attributes?: Pick<HTMLDivElement, 'id'>;
 
 	className?: string;
 	style?: CSSProperties;

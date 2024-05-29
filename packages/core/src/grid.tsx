@@ -100,6 +100,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onResize = noop,
 		onResizeStop = noop,
 		mergeStyle = false,
+		attributes = {},
 	}) => {
 		useEffect(() => {
 			return () => {
@@ -776,7 +777,8 @@ const GridLayout: FC<RGLProps> = memo(
 				onDrop={isDroppable ? onInnerDrop : noop}
 				onDragLeave={isDroppable ? onInnerDragLeave : noop}
 				onDragEnter={isDroppable ? onInnerDragEnter : noop}
-				onDragOver={isDroppable ? onInnerDragOver : noop}>
+				onDragOver={isDroppable ? onInnerDragOver : noop}
+				{...attributes}>
 				<>
 					{Children.map(children, (child) => genGridItem(child))}
 					{isDroppable && droppingDOM.current && genGridItem(droppingDOM.current, true)}
