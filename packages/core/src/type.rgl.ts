@@ -75,9 +75,20 @@ export interface RGLProps {
 	) => void;
 	//
 	children: ReactNode;
+	innerRef?: Ref<HTMLDivElement>;
+	/**
+	 * 当 `children` 中的某些 item 是提供 `ref` 操作能力的 React 组件时，
+	 * 它们的 `ref` 属性可能与实现 Draggable 功能所需的 `ref` 属性发生冲突。
+	 * 实现 Draggable 功能需要将 `ref` 绑定到包裹的元素节点上，
+	 * 以获取 item 最外层 HTML 标签的实时位置属性，并在位置变化时提供该元素的信息。
+	 *
+	 * 此时，可以使用 `wrapperProps` 来生成一个包装元素，用于绑定实现 Draggable 所需的 `ref`，
+	 * 以避免冲突。`wrapperProps` 还支持传入 `style` 和 `className` 以控制样式。
+	 */
 	wrapperProps?: {
+		// useCSSTransforms === true will omit 'transform' | 'WebkitTransform' | 'MozTransform' | 'msTransform' | 'OTransform'
+		// useCSSTransforms === false will omit 'top' | 'left'
 		style?: CSSProperties;
 		className?: string;
 	};
-	innerRef?: Ref<HTMLDivElement>;
 }
