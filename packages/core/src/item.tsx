@@ -1,4 +1,13 @@
-import { Children, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	Children,
+	cloneElement,
+	memo,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { DraggableCore } from 'react-draggable';
 import { Resizable } from 'react-resizable';
 import { fastGridItemPropsEqual, resizeItemInDirection } from './utils';
@@ -55,6 +64,7 @@ const GridItem = (props: ItemProps) => {
 		resizeHandle,
 		isBounded,
 		children,
+		wrapperProps,
 	} = props;
 
 	const ref = useRef<HTMLDivElement>(null);
@@ -368,19 +378,38 @@ const GridItem = (props: ItemProps) => {
 				transformScale={transformScale}
 				resizeHandles={resizeHandles}
 				handle={resizeHandle}>
-				<div
-					ref={ref}
-					className={cls}
-					style={{
-						...props.style,
-						...createStyle(position, {
-							containerWidth,
-							usePercentages,
-							useCSSTransforms,
-						}),
-					}}>
-					{children}
-				</div>
+				{typeof wrapperProps === 'undefined' ? (
+					cloneElement(children, {
+						ref,
+						className: cls,
+						style: {
+							...props.style,
+							...children.props.style,
+							...createStyle(position, {
+								containerWidth,
+								usePercentages,
+								useCSSTransforms,
+							}),
+						},
+					})
+				) : (
+					<div
+						ref={ref}
+						className={`${cls}${
+							wrapperProps.className ? '' : ' ' + wrapperProps.className
+						}`}
+						style={{
+							...props.style,
+							...wrapperProps.style,
+							...createStyle(position, {
+								containerWidth,
+								usePercentages,
+								useCSSTransforms,
+							}),
+						}}>
+						{children}
+					</div>
+				)}
 			</Resizable>
 		</DraggableCore>
 	);

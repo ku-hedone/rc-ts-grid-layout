@@ -101,7 +101,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onResizeStop = noop,
 		mergeStyle = false,
 		attributes = {},
-		wrapperProps = {},
+		wrapperProps,
 	}) => {
 		useEffect(() => {
 			return () => {
@@ -702,7 +702,7 @@ const GridLayout: FC<RGLProps> = memo(
 							droppingPosition={isDrop ? droppingPosition : undefined}
 							resizeHandles={resizeHandlesOptions}
 							resizeHandle={resizeHandle}
-							{...wrapperProps}>
+							wrapperProps={wrapperProps}>
 							{child}
 						</GridItem>
 					);

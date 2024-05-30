@@ -1,6 +1,6 @@
-import type { CSSProperties, SyntheticEvent, ReactNode } from 'react';
+import type { CSSProperties, SyntheticEvent, ReactElement } from 'react';
 import type { ResizableProps, ResizeCallbackData, ResizeHandle } from 'react-resizable';
-import type { DroppingPosition } from './type.rgl';
+import type { DroppingPosition, RGLProps } from './type.rgl';
 import type { DraggableEvent, DraggableData } from 'react-draggable';
 import type { Position } from './type';
 
@@ -29,8 +29,8 @@ export interface Dragging {
 	left: number;
 }
 
-export interface ItemProps {
-	children: ReactNode;
+export interface ItemProps extends Pick<RGLProps, 'wrapperProps'> {
+	children: ReactElement;
 	cols: number;
 	containerWidth: number;
 	margin: [number, number];
