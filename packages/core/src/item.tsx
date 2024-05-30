@@ -87,9 +87,9 @@ const GridItem = (props: ItemProps) => {
 				className,
 				props.static ? 'static' : '',
 				isDraggable ? 'react-draggable' : '',
-				typeof dragging !== 'undefined' ? 'react-draggable-dragging' : '',
-				typeof droppingPosition === 'undefined' ? '' : 'dropping',
 				useCSSTransforms ? 'cssTransforms' : '',
+				typeof dragging === 'undefined' ? '' : 'react-draggable-dragging',
+				typeof droppingPosition === 'undefined' ? '' : 'dropping',
 				typeof resizing === 'undefined' ? '' : 'resizing',
 			]
 				.filter((i) => !!i)
@@ -395,9 +395,7 @@ const GridItem = (props: ItemProps) => {
 				) : (
 					<div
 						ref={ref}
-						className={`${cls}${
-							wrapperProps.className ? '' : ' ' + wrapperProps.className
-						}`}
+						className={`${cls} ${wrapperProps.className || ''}`.trim()}
 						style={{
 							...props.style,
 							...wrapperProps.style,
