@@ -1,6 +1,6 @@
 {
 	"name": "@hedone/rc-ts-grid-layout",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"repository": "git@github.com:ku-hedone/rc-ts-grid-layout.git",
 	"description": "",
 	"main": "cjs/index.js",
