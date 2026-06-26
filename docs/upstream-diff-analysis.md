@@ -332,5 +332,5 @@ const paddingX =
 ### 阶段三: 架构优化 (P2) ✅ 已完成
 - [x] 新增 `position.ts` 位置策略 (2026-06-26)
 - [x] 补充类型定义 (2026-06-26)
-- [ ] 模块化拆分 utils.ts（暂不执行）
+- [x] 模块化拆分 utils.ts (2026-06-26)
 - [x] 补充 `calcGridCellDimensions` (2026-06-26)
