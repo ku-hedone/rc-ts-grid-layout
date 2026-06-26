@@ -323,9 +323,11 @@ const GridItem = (props: ItemProps) => {
 		const node = ref.current;
 		if (!node) return;
 		const prevDroppingPosition = prevDropPosition.current || { left: 0, top: 0 };
+		// 修复运算符优先级：应该在 dragging 存在时才检查位置变化
 		const shouldDrag =
-			(dragging && droppingPosition.left !== prevDroppingPosition.left) ||
-			droppingPosition.top !== prevDroppingPosition.top;
+			dragging &&
+			(droppingPosition.left !== prevDroppingPosition.left ||
+				droppingPosition.top !== prevDroppingPosition.top);
 
 		if (!dragging) {
 			onGridDragStart(droppingPosition.e, {
