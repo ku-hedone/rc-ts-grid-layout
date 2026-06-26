@@ -35,9 +35,32 @@ cd packages/core && pnpm run clean
 
 # 启动 playground 开发服务器
 cd playground && pnpm run dev
+
+# Lint 检查（oxlint）
+pnpm run lint
+
+# 自动修复 lint 问题
+pnpm run lint:fix
+
+# 格式化代码（oxfmt）
+pnpm run fmt
+
+# 检查格式化
+pnpm run fmt:check
 ```
 
 **禁止使用 `npx`、`yarn`、`npm`。** 所有命令通过 `pnpm run` 执行。
+
+## Lint & Format
+
+本项目使用 **oxlint** 和 **oxfmt** 替代 ESLint 和 Prettier：
+
+- **oxlint**: 高性能 JavaScript/TypeScript linter，基于 Rust 实现
+- **oxfmt**: 高性能代码格式化工具
+
+配置文件：
+- `.oxlintrc.json` - oxlint 配置
+- `.oxfmt.json` - oxfmt 配置
 
 ## 测试
 
