@@ -13,7 +13,7 @@ const ResizeGridLayout = ({
 }: ResizeObserverRGLProps) => {
 	const ref = useRef<HTMLDivElement>(null);
 	const mounted = useRef(false);
-	const resizeObserver = useRef<ResizeObserver>();
+	const resizeObserver = useRef<ResizeObserver | undefined>(undefined);
 
 	const [width, setWidth] = useState(1280);
 

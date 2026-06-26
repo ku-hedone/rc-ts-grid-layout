@@ -14,6 +14,7 @@ import {
 	correctBounds,
 	validateLayout,
 } from '../layout';
+import { collides } from '../collision';
 import type { LayoutItem } from '../type';
 
 // 辅助函数：创建布局项
@@ -26,6 +27,12 @@ function createItem(overrides: Partial<LayoutItem> = {}): LayoutItem {
 		h: 1,
 		...overrides,
 	};
+}
+
+function itemAt<T>(items: readonly T[], index: number): T {
+	const item = items[index];
+	if (!item) throw new Error(`Expected item at index ${index}`);
+	return item;
 }
 
 describe('layout', () => {
@@ -56,18 +63,18 @@ describe('layout', () => {
 			];
 			const cloned = cloneLayout(layout);
 			// cloneLayoutItem 会添加额外的属性，所以只检查核心属性
-			expect(cloned[0].i).toBe('1');
-			expect(cloned[0].x).toBe(0);
-			expect(cloned[1].i).toBe('2');
-			expect(cloned[1].x).toBe(1);
+			expect(itemAt(cloned, 0).i).toBe('1');
+			expect(itemAt(cloned, 0).x).toBe(0);
+			expect(itemAt(cloned, 1).i).toBe('2');
+			expect(itemAt(cloned, 1).x).toBe(1);
 			expect(cloned).not.toBe(layout);
 		});
 
 		it('深克隆', () => {
 			const layout = [createItem({ i: '1', x: 0, y: 0 })];
 			const cloned = cloneLayout(layout);
-			cloned[0].x = 10;
-			expect(layout[0].x).toBe(0);
+			itemAt(cloned, 0).x = 10;
+			expect(itemAt(layout, 0).x).toBe(0);
 		});
 
 		it('空布局', () => {
@@ -104,8 +111,8 @@ describe('layout', () => {
 			];
 			const newItem = createItem({ i: '2', x: 5, y: 5 });
 			const modified = modifyLayout(layout, newItem);
-			expect(modified[1].x).toBe(5);
-			expect(modified[1].y).toBe(5);
+			expect(itemAt(modified, 1).x).toBe(5);
+			expect(itemAt(modified, 1).y).toBe(5);
 		});
 
 		it('不修改原布局', () => {
@@ -115,7 +122,7 @@ describe('layout', () => {
 			];
 			const newItem = createItem({ i: '2', x: 5, y: 5 });
 			modifyLayout(layout, newItem);
-			expect(layout[1].x).toBe(1);
+			expect(itemAt(layout, 1).x).toBe(1);
 		});
 	});
 
@@ -130,7 +137,7 @@ describe('layout', () => {
 				x: 10,
 			}));
 			expect(item?.x).toBe(10);
-			expect(newLayout[1].x).toBe(10);
+			expect(itemAt(newLayout, 1).x).toBe(10);
 		});
 
 		it('不存在的 ID 返回原布局', () => {
@@ -188,27 +195,25 @@ describe('layout', () => {
 		it('修正右侧溢出', () => {
 			const layout = [createItem({ i: '1', x: 8, y: 0, w: 4 })];
 			const corrected = correctBounds(layout, { cols: 10 });
-			expect(corrected[0].x).toBe(6);
+			expect(itemAt(corrected, 0).x).toBe(6);
 		});
 
 		it('修正左侧溢出', () => {
 			const layout = [createItem({ i: '1', x: -2, y: 0, w: 2 })];
 			const corrected = correctBounds(layout, { cols: 10 });
-			expect(corrected[0].x).toBe(0);
-			expect(corrected[0].w).toBe(10);
+			expect(itemAt(corrected, 0).x).toBe(0);
+			expect(itemAt(corrected, 0).w).toBe(10);
 		});
 
 		it('静态元素碰撞时下移', () => {
-			// 创建两个重叠的静态元素
 			const layout = [
 				createItem({ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }),
 				createItem({ i: '2', x: 0, y: 0, w: 2, h: 2, static: true }),
 			];
 			const corrected = correctBounds(layout, { cols: 10 });
-			// 第二个静态元素应该向下移动以避免碰撞
-			// 注意：correctBounds 只处理边界溢出，不处理静态元素碰撞
-			// 所以这里只验证函数不会崩溃
-			expect(corrected).toHaveLength(2);
+			expect(itemAt(corrected, 0).y).toBe(2);
+			expect(itemAt(corrected, 1).y).toBe(0);
+			expect(collides(itemAt(corrected, 0), itemAt(corrected, 1))).toBe(false);
 		});
 	});
 

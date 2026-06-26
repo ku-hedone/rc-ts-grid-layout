@@ -14,7 +14,7 @@ import { fastGridItemPropsEqual, resizeItemInDirection } from './utils';
 import { calcGridItemWHPx, calcGridColWidth, calcWH, clamp, calcXY } from './calculate';
 import { calcGridItemPosition, createStyle } from './utils.item';
 import { isEqual } from 'lodash';
-import type { FC, ReactNode } from 'react';
+import type { CSSProperties, FC, ReactElement, ReactNode, Ref } from 'react';
 import type {
 	Dragging,
 	GenResizeParams,
@@ -27,6 +27,12 @@ import type {
 } from './type.item';
 import type { PartialPosition, Position } from './type';
 import type { DroppingPosition } from './type.rgl';
+
+type GridChildProps = {
+	ref?: Ref<HTMLDivElement>;
+	className?: string;
+	style?: CSSProperties;
+};
 
 const GridItem = (props: ItemProps) => {
 	const {
@@ -70,15 +76,9 @@ const GridItem = (props: ItemProps) => {
 	const ref = useRef<HTMLDivElement>(null);
 	const [resizing, setResizing] = useState<Resizing>();
 	const [dragging, setDragging] = useState<Dragging>();
-	const prevDropPosition = useRef<DroppingPosition>();
+	const prevDropPosition = useRef<DroppingPosition | undefined>(undefined);
 
-	const currentPosition = useRef<Position>();
-
-	useEffect(() => {
-		return () => {
-			console.log('item unmounted', i);
-		};
-	}, [i]);
+	const currentPosition = useRef<Position | undefined>(undefined);
 
 	const cls = useMemo(
 		() =>
@@ -378,16 +378,16 @@ const GridItem = (props: ItemProps) => {
 				transformScale={transformScale}
 				resizeHandles={resizeHandles}
 				handle={resizeHandle}>
-				{typeof wrapperProps === 'undefined' ? (
-					cloneElement(children, {
-						ref,
-						className: cls,
-						style: {
-							...props.style,
-							...children.props.style,
-							...createStyle(position, {
-								containerWidth,
-								usePercentages,
+					{typeof wrapperProps === 'undefined' ? (
+						cloneElement(children as ReactElement<GridChildProps>, {
+							ref,
+							className: cls,
+							style: {
+								...props.style,
+								...(children.props as GridChildProps).style,
+								...createStyle(position, {
+									containerWidth,
+									usePercentages,
 								useCSSTransforms,
 							}),
 						},

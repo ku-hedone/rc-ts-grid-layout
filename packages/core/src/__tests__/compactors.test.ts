@@ -29,6 +29,12 @@ function createItem(overrides: Partial<LayoutItem> = {}): LayoutItem {
 	};
 }
 
+function itemAt<T>(items: readonly T[], index: number): T {
+	const item = items[index];
+	if (!item) throw new Error(`Expected item at index ${index}`);
+	return item;
+}
+
 describe('compactors', () => {
 	describe('verticalCompactor', () => {
 		it('类型为 vertical', () => {
@@ -46,8 +52,8 @@ describe('compactors', () => {
 			];
 			const compacted = verticalCompactor.compact(layout, 12);
 			// 元素应该被压缩到顶部
-			expect(compacted[0].y).toBeLessThan(5);
-			expect(compacted[1].y).toBeLessThan(10);
+			expect(itemAt(compacted, 0).y).toBe(0);
+			expect(itemAt(compacted, 1).y).toBe(2);
 		});
 
 		it('静态元素不移动', () => {
@@ -57,7 +63,7 @@ describe('compactors', () => {
 			];
 			const compacted = verticalCompactor.compact(layout, 12);
 			// 静态元素应该保持原位
-			expect(compacted[0].y).toBe(10);
+			expect(itemAt(compacted, 0).y).toBe(10);
 		});
 	});
 
@@ -77,8 +83,8 @@ describe('compactors', () => {
 			];
 			const compacted = horizontalCompactor.compact(layout, 12);
 			// 元素应该被压缩到左侧
-			expect(compacted[0].x).toBeLessThan(5);
-			expect(compacted[1].x).toBeLessThan(10);
+			expect(itemAt(compacted, 0).x).toBe(0);
+			expect(itemAt(compacted, 1).x).toBe(2);
 		});
 	});
 
@@ -98,10 +104,10 @@ describe('compactors', () => {
 			];
 			const compacted = noCompactor.compact(layout, 12);
 			// 元素位置应该保持不变
-			expect(compacted[0].x).toBe(5);
-			expect(compacted[0].y).toBe(5);
-			expect(compacted[1].x).toBe(10);
-			expect(compacted[1].y).toBe(10);
+			expect(itemAt(compacted, 0).x).toBe(5);
+			expect(itemAt(compacted, 0).y).toBe(5);
+			expect(itemAt(compacted, 1).x).toBe(10);
+			expect(itemAt(compacted, 1).y).toBe(10);
 		});
 	});
 
@@ -125,8 +131,8 @@ describe('compactors', () => {
 			];
 			const compacted = verticalOverlapCompactor.compact(layout, 12);
 			// 元素位置应该保持不变
-			expect(compacted[0].y).toBe(5);
-			expect(compacted[1].y).toBe(10);
+			expect(itemAt(compacted, 0).y).toBe(5);
+			expect(itemAt(compacted, 1).y).toBe(10);
 		});
 	});
 
@@ -232,8 +238,8 @@ describe('compactors', () => {
 				createItem({ i: '1', x: 0, y: 0, w: 2, h: 2 }),
 				createItem({ i: '2', x: 0, y: 3, w: 2, h: 2 }),
 			];
-			resolveCompactionCollision(layout, layout[0], 5, 'y');
-			expect(layout[0].y).toBe(5);
+			resolveCompactionCollision(layout, itemAt(layout, 0), 5, 'y');
+			expect(itemAt(layout, 0).y).toBe(5);
 		});
 
 		it('处理静态元素', () => {
@@ -241,8 +247,8 @@ describe('compactors', () => {
 				createItem({ i: '1', x: 0, y: 0, w: 2, h: 2 }),
 				createItem({ i: '2', x: 0, y: 3, w: 2, h: 2, static: true }),
 			];
-			resolveCompactionCollision(layout, layout[0], 5, 'y');
-			expect(layout[0].y).toBe(5);
+			resolveCompactionCollision(layout, itemAt(layout, 0), 5, 'y');
+			expect(itemAt(layout, 0).y).toBe(5);
 		});
 	});
 });

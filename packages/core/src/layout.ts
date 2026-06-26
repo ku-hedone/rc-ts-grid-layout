@@ -4,10 +4,10 @@
  * 提供布局的查询、克隆、修改、验证等功能。
  */
 
-import { Children } from 'react';
+import { Children, isValidElement } from 'react';
 import type { ReactNode } from 'react';
 import type { CompactType, Layout, LayoutItem } from './type';
-import { getStatics, getFirstCollision } from './collision';
+import { getFirstCollision } from './collision';
 import { sortLayoutItems } from './sort';
 import { compact } from './movement';
 
@@ -221,8 +221,9 @@ export function synchronizeLayoutWithChildren(
 	const layout: LayoutItem[] = [];
 	Children.forEach(children, (child) => {
 		// 子元素可能不存在
-		if (typeof child === 'object' && child && 'key' in child && child.key !== null) {
-			const exists = getLayoutItem(innerLayout, child.key + '');
+		if (isValidElement<{ 'data-grid'?: LayoutItem }>(child) && child.key !== null) {
+			const key = String(child.key);
+			const exists = getLayoutItem(innerLayout, key);
 			const g = child.props['data-grid'];
 			// 如果布局项已存在于初始布局中则不覆盖。
 			// 如果有 `data-grid` 属性，优先使用它。
@@ -231,18 +232,18 @@ export function synchronizeLayoutWithChildren(
 			} else {
 				// 此项有 data-grid 属性，使用它。
 				if (g) {
-					layout.push(cloneLayoutItem({ ...g, i: child.key }));
+					layout.push(cloneLayoutItem({ ...g, i: key }));
 				} else {
 					// 没有提供数据：确保添加到底部
 					layout.push(
 						cloneLayoutItem({
-							w: 1,
-							h: 1,
-							x: 0,
-							y: bottom(layout),
-							i: String(child.key),
-						}),
-					);
+								w: 1,
+								h: 1,
+								x: 0,
+								y: bottom(layout),
+								i: key,
+							}),
+						);
 				}
 			}
 		}

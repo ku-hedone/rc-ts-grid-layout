@@ -103,19 +103,13 @@ const GridLayout: FC<RGLProps> = memo(
 		attributes = {},
 		wrapperProps,
 	}) => {
-		useEffect(() => {
-			return () => {
-				console.log('unmounted gird');
-			};
-		}, []);
-
 		const lastLayout = useRef<Layout>(layout);
 		/**
 		 * 上一个布局项
 		 */
-		const old = useRef<LayoutItem>();
-		const droppingDOM = useRef<ReactElement>();
-		const lastRect = useRef<Rect>();
+		const old = useRef<LayoutItem | undefined>(undefined);
+		const droppingDOM = useRef<ReactElement | undefined>(undefined);
+		const lastRect = useRef<Rect | undefined>(undefined);
 		const resizing = useRef(false);
 		const dragEnterCount = useRef(0);
 		// 最终紧凑类型
@@ -168,7 +162,6 @@ const GridLayout: FC<RGLProps> = memo(
 		}, [autoSize, containerPadding, innerLayout, margin, rowHeight]);
 		// 拖拽或调整大小时生成占位元素
 		const placeholder = useMemo(() => {
-			// console.log('placeholder rect', rect);
 			if (rect) {
 				const { w, h, x, y, i } = rect;
 				const cls = `react-grid-placeholder ${

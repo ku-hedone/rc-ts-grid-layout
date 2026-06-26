@@ -264,13 +264,13 @@ describe('constraints', () => {
 		});
 	});
 
-	describe('defaultConstraints', () => {
-		it('包含 gridBounds 和 minMaxSize', () => {
-			expect(defaultConstraints).toHaveLength(2);
-			expect(defaultConstraints[0].name).toBe('gridBounds');
-			expect(defaultConstraints[1].name).toBe('minMaxSize');
+		describe('defaultConstraints', () => {
+			it('包含 gridBounds 和 minMaxSize', () => {
+				expect(defaultConstraints).toHaveLength(2);
+				expect(defaultConstraints[0]?.name).toBe('gridBounds');
+				expect(defaultConstraints[1]?.name).toBe('minMaxSize');
+			});
 		});
-	});
 
 	describe('applyPositionConstraints', () => {
 		it('应用网格级别约束', () => {

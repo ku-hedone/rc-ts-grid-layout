@@ -13,7 +13,7 @@
  */
 
 import { deepEqual } from './equals';
-import { Children } from 'react';
+import { Children, isValidElement } from 'react';
 import type { ReactNode } from 'react';
 import type { CompactType, Layout, LayoutItem, Position } from './type';
 import type { DroppingPosition } from './type.rgl';
@@ -59,20 +59,20 @@ export { setTransform, setTopLeft, perc, resizeItemInDirection } from './positio
 export function childrenEqual(a: ReactNode, b: ReactNode): boolean {
 	const sameElement = deepEqual(
 		Children.map(a, (c) => {
-			return c && typeof c === 'object' && 'key' in c ? c.key : void 0;
+			return isValidElement(c) ? c.key : void 0;
 		}),
 		Children.map(b, (c) => {
-			return c && typeof c === 'object' && 'key' in c ? c.key : void 0;
+			return isValidElement(c) ? c.key : void 0;
 		}),
 	);
 	const sameDataProps = deepEqual(
 		Children.map(a, (c) => {
-			return c && typeof c === 'object' && 'props' in c && 'data-grid' in c.props
+			return isValidElement<{ 'data-grid'?: unknown }>(c)
 				? c.props['data-grid']
 				: void 0;
 		}),
 		Children.map(b, (c) => {
-			return c && typeof c === 'object' && 'props' in c && 'data-grid' in c.props
+			return isValidElement<{ 'data-grid'?: unknown }>(c)
 				? c.props['data-grid']
 				: void 0;
 		}),
@@ -177,15 +177,20 @@ export const fastGridItemPropsEqual = (
 	// 子元素
 	if (prev === next) return true;
 	const areDroppingPositionEquals = droppingPositionCompare(
-		prev.DroppingPosition as DroppingPosition,
-		next.DroppingPosition as DroppingPosition,
+		prev.droppingPosition as DroppingPosition,
+		next.droppingPosition as DroppingPosition,
 	);
 	return (
 		// 对象类型
 		prev.children === next.children &&
+		prev.style === next.style &&
+		prev.wrapperProps === next.wrapperProps &&
 		prev.resizeHandle === next.resizeHandle &&
 		areDroppingPositionEquals &&
 		// 函数类型
+		prev.onDragStart === next.onDragStart &&
+		prev.onDrag === next.onDrag &&
+		prev.onDragStop === next.onDragStop &&
 		prev.onResizeStart === next.onResizeStart &&
 		prev.onResize === next.onResize &&
 		prev.onResizeStop === next.onResizeStop &&
@@ -202,13 +207,21 @@ export const fastGridItemPropsEqual = (
 		prev.rowHeight === next.rowHeight &&
 		prev.maxRows === next.maxRows &&
 		prev.containerWidth === next.containerWidth &&
+		prev.transformScale === next.transformScale &&
 		// 布尔类型
 		prev.isDraggable === next.isDraggable &&
 		prev.isResizable === next.isResizable &&
 		prev.isBounded === next.isBounded &&
+		prev.static === next.static &&
+		prev.useCSSTransforms === next.useCSSTransforms &&
+		prev.usePercentages === next.usePercentages &&
 		// 字符串类型
 		prev.i === next.i &&
+		prev.className === next.className &&
+		prev.cancel === next.cancel &&
+		prev.handle === next.handle &&
 		// 数组类型
+		isEqualImpl(prev.resizeHandles, next.resizeHandles) &&
 		isEqualImpl(prev.containerPadding, next.containerPadding) &&
 		isEqualImpl(prev.margin, next.margin)
 	);

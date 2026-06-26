@@ -80,8 +80,8 @@ describe('calculate', () => {
 				maxRows: 100,
 			};
 			const { x, y } = calcXY(params, 50, 100, 2, 2);
-			expect(x).toBeGreaterThanOrEqual(0);
-			expect(y).toBeGreaterThanOrEqual(0);
+			expect(x).toBe(1);
+			expect(y).toBe(1);
 		});
 
 		it('边界限制', () => {
@@ -110,8 +110,8 @@ describe('calculate', () => {
 				maxRows: 100,
 			};
 			const { w, h } = calcWH(params, 200, 60, 0, 0, 'se');
-			expect(w).toBeGreaterThan(0);
-			expect(h).toBeGreaterThan(0);
+			expect(w).toBe(2);
+			expect(h).toBe(2);
 		});
 
 		it('西向把手可扩展到全宽', () => {
@@ -139,9 +139,8 @@ describe('calculate', () => {
 				maxRows: 100,
 			};
 			const { x, y } = calcXYRaw(params, -100, -100);
-			// 不做限制，可能为负数
-			expect(typeof x).toBe('number');
-			expect(typeof y).toBe('number');
+			expect(x).toBe(-1);
+			expect(y).toBe(-3);
 		});
 	});
 
@@ -156,8 +155,8 @@ describe('calculate', () => {
 				maxRows: 100,
 			};
 			const { w, h } = calcWHRaw(params, 50, 20);
-			expect(w).toBeGreaterThanOrEqual(1);
-			expect(h).toBeGreaterThanOrEqual(1);
+			expect(w).toBe(1);
+			expect(h).toBe(1);
 		});
 	});
 
@@ -166,8 +165,7 @@ describe('calculate', () => {
 			expect(clamp(5, 0, 10)).toBe(5);
 		});
 
-		// 暂时跳过这个测试，需要检查 clamp 函数实现
-		it.skip('值小于最小值', () => {
+		it('值小于最小值', () => {
 			expect(clamp(-5, 0, 10)).toBe(0);
 		});
 
@@ -190,7 +188,7 @@ describe('calculate', () => {
 				margin: [10, 10],
 				containerPadding: [10, 10],
 			});
-			expect(dims.cellWidth).toBeGreaterThan(0);
+			expect(dims.cellWidth).toBeCloseTo(89.17, 1);
 			expect(dims.cellHeight).toBe(30);
 			expect(dims.offsetX).toBe(10);
 			expect(dims.offsetY).toBe(10);

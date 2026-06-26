@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import GridLayout from '../grid';
 import type { Layout } from '../type';
@@ -17,109 +17,85 @@ function createLayout(): Layout {
 	];
 }
 
+function renderBasicGrid(props: Partial<React.ComponentProps<typeof GridLayout>> = {}) {
+	return render(
+		<GridLayout
+			width={1200}
+			layout={createLayout()}
+			cols={12}
+			rowHeight={30}
+			{...props}
+		>
+			<div key="1">Item 1</div>
+			<div key="2">Item 2</div>
+			<div key="3">Item 3</div>
+		</GridLayout>,
+	);
+}
+
+function getGridContainer(): HTMLElement {
+	const container = document.querySelector('.react-grid-layout');
+	expect(container).toBeInTheDocument();
+	return container as HTMLElement;
+}
+
+function getGridItems(): HTMLElement[] {
+	return Array.from(document.querySelectorAll<HTMLElement>('.react-grid-item'));
+}
+
+function getGridItemByText(text: string): HTMLElement {
+	const item = screen.getByText(text).closest('.react-grid-item');
+	if (!(item instanceof HTMLElement)) {
+		throw new Error(`Grid item not found for text: ${text}`);
+	}
+	return item;
+}
+
 describe('GridLayout', () => {
 	it('渲染网格容器', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid();
 
-		// 检查网格容器是否存在
-		const container = document.querySelector('.react-grid-layout');
-		expect(container).toBeInTheDocument();
+		const container = getGridContainer();
+		expect(container).toHaveClass('react-grid-layout');
 	});
 
 	it('渲染网格项', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid();
 
-		// 检查网格项是否存在
-		const items = document.querySelectorAll('.react-grid-item');
+		const items = getGridItems();
 		expect(items).toHaveLength(3);
+		expect(screen.getByText('Item 1')).toBeInTheDocument();
+		expect(screen.getByText('Item 2')).toBeInTheDocument();
+		expect(screen.getByText('Item 3')).toBeInTheDocument();
 	});
 
 	it('应用自定义类名', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				className="custom-grid"
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ className: 'custom-grid' });
 
-		// 检查自定义类名是否应用
-		const container = document.querySelector('.react-grid-layout');
+		const container = getGridContainer();
 		expect(container).toHaveClass('custom-grid');
 	});
 
 	it('应用自定义样式', () => {
-		const layout = createLayout();
 		const style = { backgroundColor: 'red' };
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				style={style}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ style });
 
-		// 检查网格容器是否存在
-		const container = document.querySelector('.react-grid-layout');
-		expect(container).toBeInTheDocument();
+		const container = getGridContainer();
+		expect(container.style.backgroundColor).toBe('red');
 	});
 
 	it('调用 onLayoutChange 回调', () => {
-		const layout = createLayout();
 		const onLayoutChange = vi.fn();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				onLayoutChange={onLayoutChange}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ onLayoutChange });
 
-		// onLayoutChange 应该在组件挂载时被调用
 		expect(onLayoutChange).toHaveBeenCalled();
+		expect(onLayoutChange).toHaveBeenCalledWith(
+			expect.arrayContaining([
+				expect.objectContaining({ i: '1', x: 0, y: 0, w: 2, h: 2 }),
+				expect.objectContaining({ i: '2', x: 2, y: 0, w: 2, h: 2 }),
+				expect.objectContaining({ i: '3', x: 4, y: 0, w: 2, h: 2 }),
+			]),
+		);
 	});
 
 	it('静态项不可拖拽', () => {
@@ -139,121 +115,63 @@ describe('GridLayout', () => {
 			</GridLayout>,
 		);
 
-		// 检查网格项是否存在
-		const items = document.querySelectorAll('.react-grid-item');
-		expect(items).toHaveLength(2);
+		const staticItem = getGridItemByText('Static Item');
+		const draggableItem = getGridItemByText('Draggable Item');
+		expect(staticItem).toHaveClass('static');
+		expect(staticItem).not.toHaveClass('react-draggable');
+		expect(draggableItem).toHaveClass('react-draggable');
 	});
 
 	it('禁用拖拽', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isDraggable={false}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ isDraggable: false });
 
-		// 检查网格容器
-		const container = document.querySelector('.react-grid-layout');
-		expect(container).toBeInTheDocument();
+		const items = getGridItems();
+		expect(items).toHaveLength(3);
+		items.forEach((item) => {
+			expect(item).not.toHaveClass('react-draggable');
+		});
 	});
 
 	it('禁用缩放', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isResizable={false}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ isResizable: false });
 
-		// 检查网格项是否存在
-		const items = document.querySelectorAll('.react-grid-item');
-		expect(items).toHaveLength(3);
+		const hiddenResizeItems = document.querySelectorAll('.react-resizable-hide');
+		expect(hiddenResizeItems).toHaveLength(3);
 	});
 
 	it('启用缩放', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isResizable={true}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+		renderBasicGrid({ isResizable: true });
 
-		// 检查网格项是否存在
-		const items = document.querySelectorAll('.react-grid-item');
+		const items = getGridItems();
 		expect(items).toHaveLength(3);
-	});
-
-	it('使用 CSS transforms 定位', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				useCSSTransforms={true}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
-
-		// 检查网格项是否有 transform 样式
-		const items = document.querySelectorAll('.react-grid-item');
 		items.forEach((item) => {
-			expect(item).toHaveStyle({ position: 'absolute' });
+			expect(item).not.toHaveClass('react-resizable-hide');
 		});
 	});
 
-	it('使用 top/left 定位', () => {
-		const layout = createLayout();
-		render(
-			<GridLayout
-				width={1200}
-				layout={layout}
-				cols={12}
-				rowHeight={30}
-				useCSSTransforms={false}
-			>
-				<div key="1">Item 1</div>
-				<div key="2">Item 2</div>
-				<div key="3">Item 3</div>
-			</GridLayout>,
-		);
+	it('使用 CSS transforms 定位', async () => {
+		renderBasicGrid({ useCSSTransforms: true });
 
-		// 检查网格项是否有 top/left 样式
-		const items = document.querySelectorAll('.react-grid-item');
-		items.forEach((item) => {
-			expect(item).toHaveStyle({ position: 'absolute' });
+		const item = getGridItemByText('Item 1');
+		await waitFor(() => expect(item).toHaveClass('cssTransforms'));
+		expect(item.style.transform).toBe('translate(10px,10px)');
+		expect(item.style.top).toBe('');
+		expect(item.style.left).toBe('');
+	});
+
+	it('使用 top/left 定位', async () => {
+		renderBasicGrid({ useCSSTransforms: false });
+
+		const item = getGridItemByText('Item 1');
+		expect(item).not.toHaveClass('cssTransforms');
+		expect(item.style.transform).toBe('');
+		await waitFor(() => {
+			expect(item.style.top).toBe('10px');
+			expect(item.style.left).toBe('10px');
 		});
 	});
 
-	it('空布局', () => {
+	it('空 layout 会为 child 自动生成布局项', () => {
 		render(
 			<GridLayout
 				width={1200}
@@ -265,8 +183,8 @@ describe('GridLayout', () => {
 			</GridLayout>,
 		);
 
-		// 检查网格容器是否存在
-		const container = document.querySelector('.react-grid-layout');
-		expect(container).toBeInTheDocument();
+		expect(getGridContainer()).toBeInTheDocument();
+		expect(getGridItems()).toHaveLength(1);
+		expect(getGridItemByText('Item 1')).toHaveStyle({ position: 'absolute' });
 	});
 });
