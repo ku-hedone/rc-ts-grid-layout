@@ -26,7 +26,12 @@ export type LayoutItem = {
 	/** 项级别的布局约束，与网格级别约束叠加应用 */
 	constraints?: LayoutConstraint[];
 };
-export type Layout = LayoutItem[];
+
+/**
+ * 布局是只读的布局项数组
+ * 布局应被视为不可变的
+ */
+export type Layout = readonly LayoutItem[];
 
 export type Position = {
 	left: number;
@@ -176,3 +181,167 @@ export interface LayoutConstraint {
 		context: ConstraintContext,
 	): { w: number; h: number };
 }
+
+/**
+ * CSS 定位策略接口
+ *
+ * 实现此接口可自定义项在 DOM 中的定位方式。
+ * 内置策略: transformStrategy, absoluteStrategy
+ *
+ * @example
+ * ```typescript
+ * // 使用基于 transform 的定位（默认，性能更好）
+ * <GridLayout positionStrategy={transformStrategy} />
+ *
+ * // 使用 top/left 定位（用于 transform 导致问题的场景）
+ * <GridLayout positionStrategy={absoluteStrategy} />
+ *
+ * // 使用缩放 transform（用于缩放容器）
+ * <GridLayout positionStrategy={createScaledStrategy(0.5)} />
+ * ```
+ */
+export interface PositionStrategy {
+	/** 策略类型标识符 */
+	readonly type: 'transform' | 'absolute';
+
+	/** 拖拽/缩放计算的缩放因子 */
+	readonly scale: number;
+
+	/**
+	 * 将像素位置转换为 CSS 样式对象
+	 *
+	 * @param pos - 像素位置
+	 * @returns 用于定位元素的 CSS 属性
+	 */
+	calcStyle(pos: Position): React.CSSProperties;
+
+	/**
+	 * 在拖拽操作期间计算位置，考虑 transform 和缩放
+	 *
+	 * 此方法可选。未提供时，react-draggable 使用其内置的
+	 * 父元素相对坐标计算。仅在需要自定义坐标处理时覆盖此方法，
+	 * 例如缩放容器场景。
+	 *
+	 * @param clientX - 鼠标客户端 X 位置
+	 * @param clientY - 鼠标客户端 Y 位置
+	 * @param offsetX - 相对于元素原点的 X 偏移
+	 * @param offsetY - 相对于元素原点的 Y 偏移
+	 * @returns 调整后的 left/top 位置
+	 */
+	calcDragPosition?(clientX: number, clientY: number, offsetX: number, offsetY: number): PartialPosition;
+}
+
+// ============================================================================
+// 网格配置类型（v2 可组合接口）
+// ============================================================================
+
+/**
+ * 网格测量配置
+ * 将所有网格指标（列数、行高、边距）分组
+ */
+export interface GridConfig {
+	/** 网格列数（默认: 12） */
+	cols: number;
+
+	/** 单行高度（像素）（默认: 150） */
+	rowHeight: number;
+
+	/** [水平, 垂直] 项之间的间距（像素）（默认: [10, 10]） */
+	margin: readonly [number, number];
+
+	/** [水平, 垂直] 容器内边距（像素）（默认: null，使用 margin） */
+	containerPadding: readonly [number, number] | null;
+
+	/** 最大行数（默认: Infinity） */
+	maxRows: number;
+}
+
+/** 默认网格配置 */
+export const defaultGridConfig: GridConfig = {
+	cols: 12,
+	rowHeight: 150,
+	margin: [10, 10],
+	containerPadding: null,
+	maxRows: Infinity,
+};
+
+/**
+ * 拖拽行为配置
+ * 将所有拖拽相关设置分组
+ */
+export interface DragConfig {
+	/** 是否可拖拽（默认: true） */
+	enabled: boolean;
+
+	/** 是否限制在容器内（默认: false） */
+	bounded: boolean;
+
+	/** 拖拽把手的 CSS 选择器（如 '.drag-handle'） */
+	handle?: string;
+
+	/** 不触发拖拽的元素的 CSS 选择器 */
+	cancel?: string;
+
+	/**
+	 * 拖拽开始前的最小移动像素数
+	 * 区分点击和拖拽（修复 #1341, #1401）
+	 * @default 3
+	 */
+	threshold: number;
+}
+
+/** 默认拖拽配置 */
+export const defaultDragConfig: DragConfig = {
+	enabled: true,
+	bounded: false,
+	threshold: 3,
+};
+
+/**
+ * 缩放行为配置
+ * 将所有缩放相关设置分组
+ */
+export interface ResizeConfig {
+	/** 是否可缩放（默认: true） */
+	enabled: boolean;
+
+	/** 显示哪些缩放把手（默认: ['se']） */
+	handles: readonly ResizeHandleAxis[];
+
+	/**
+	 * 自定义缩放把手组件
+	 * 可以是 React 节点或接收 axis 的函数
+	 */
+	handleComponent?: React.ReactNode | ((axis: ResizeHandleAxis, ref: React.Ref<HTMLElement>) => React.ReactNode);
+}
+
+/** 默认缩放配置 */
+export const defaultResizeConfig: ResizeConfig = {
+	enabled: true,
+	handles: ['se'],
+};
+
+/**
+ * 拖放配置（用于拖放外部元素）
+ * 将所有拖放相关设置分组
+ */
+export interface DropConfig {
+	/** 是否可拖放外部元素到网格（默认: false） */
+	enabled: boolean;
+
+	/** 拖放项的默认尺寸（默认: { w: 1, h: 1 }） */
+	defaultItem: { w: number; h: number };
+
+	/**
+	 * 在网格上拖拽时调用
+	 * 返回尺寸以覆盖 defaultItem，或 false 以拒绝拖放
+	 * 也可以返回 dragOffsetX/dragOffsetY 以指定光标偏移量用于居中
+	 */
+	onDragOver?: (e: DragEvent) => { w?: number; h?: number; dragOffsetX?: number; dragOffsetY?: number } | false | void;
+}
+
+/** 默认拖放配置 */
+export const defaultDropConfig: DropConfig = {
+	enabled: false,
+	defaultItem: { w: 1, h: 1 },
+};

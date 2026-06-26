@@ -156,6 +156,101 @@ export function calcWHRaw(
 	return { w, h };
 }
 
+// ============================================================================
+// 网格背景计算
+// ============================================================================
+
+/**
+ * 网格单元尺寸信息，用于渲染背景或覆盖层
+ */
+export interface GridCellDimensions {
+	/** 单个单元格的宽度（像素） */
+	readonly cellWidth: number;
+	/** 单个单元格的高度（像素） */
+	readonly cellHeight: number;
+	/** 从容器边缘到第一个单元格的水平偏移 */
+	readonly offsetX: number;
+	/** 从容器边缘到第一个单元格的垂直偏移 */
+	readonly offsetY: number;
+	/** 单元格之间的水平间距 */
+	readonly gapX: number;
+	/** 单元格之间的垂直间距 */
+	readonly gapY: number;
+	/** 列数 */
+	readonly cols: number;
+	/** 容器总宽度 */
+	readonly containerWidth: number;
+}
+
+/**
+ * 网格单元尺寸计算的配置
+ */
+export interface GridCellConfig {
+	/** 容器宽度（像素） */
+	width: number;
+	/** 列数 */
+	cols: number;
+	/** 行高（像素） */
+	rowHeight: number;
+	/** 项之间的间距 [x, y] */
+	margin?: readonly [number, number];
+	/** 容器内边距 [x, y]，未指定时使用 margin */
+	containerPadding?: readonly [number, number] | null;
+}
+
+/**
+ * 计算渲染网格背景所需的单元格尺寸
+ *
+ * 此函数提供渲染与实际网格单元对齐的可视化网格背景
+ * 所需的所有测量值。
+ *
+ * @param config - 网格配置
+ * @returns 单元格尺寸和偏移量
+ *
+ * @example
+ * ```tsx
+ * import { calcGridCellDimensions } from '@hedone/rc-ts-grid-layout';
+ *
+ * const dims = calcGridCellDimensions({
+ *   width: 1200,
+ *   cols: 12,
+ *   rowHeight: 30,
+ *   margin: [10, 10],
+ *   containerPadding: [10, 10]
+ * });
+ *
+ * // dims.cellWidth = 88.33...
+ * // dims.cellHeight = 30
+ * // dims.offsetX = 10 (containerPadding[0])
+ * // dims.offsetY = 10 (containerPadding[1])
+ * // dims.gapX = 10 (margin[0])
+ * // dims.gapY = 10 (margin[1])
+ * ```
+ */
+export function calcGridCellDimensions(config: GridCellConfig): GridCellDimensions {
+	const { width, cols, rowHeight, margin = [10, 10], containerPadding } = config;
+
+	// 容器内边距未指定时使用 margin
+	const padding = containerPadding ?? margin;
+
+	// 计算单元格宽度：总宽度减去内边距和间距，除以列数
+	// 公式: width = 2*padding + cols*cellWidth + (cols-1)*gap
+	// 求解 cellWidth: cellWidth = (width - 2*padding - (cols-1)*gap) / cols
+	const cellWidth = (width - padding[0] * 2 - margin[0] * (cols - 1)) / cols;
+	const cellHeight = rowHeight;
+
+	return {
+		cellWidth,
+		cellHeight,
+		offsetX: padding[0],
+		offsetY: padding[1],
+		gapX: margin[0],
+		gapY: margin[1],
+		cols,
+		containerWidth: width,
+	};
+}
+
 // 类似 _.clamp 的数值限制函数
 export function clamp(num: number, lowerBound: number, upperBound: number): number {
 	return Math.max(Math.min(num, upperBound), lowerBound);

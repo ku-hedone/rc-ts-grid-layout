@@ -6,4 +6,5 @@ export { default as GridLayout } from './grid';
 export * from './utils';
 export * from './constraints';
 export * from './compactors';
+export * from './position';
 export type * from './type';
