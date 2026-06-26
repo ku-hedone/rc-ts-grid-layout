@@ -275,7 +275,7 @@ export function validateLayout(layout: Layout, contextName = 'Layout'): void {
 								contextName +
 								'[' +
 								i +
-								].' +
+								'].' +
 								props +
 								' must be a number! Current value: ' +
 								String(item[props]),

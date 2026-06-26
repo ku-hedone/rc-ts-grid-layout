@@ -39,6 +39,47 @@ cd playground && pnpm run dev
 
 **禁止使用 `npx`、`yarn`、`npm`。** 所有命令通过 `pnpm run` 执行。
 
+## 测试
+
+### 单元测试（Vitest）
+
+```bash
+# 运行所有单元测试
+cd packages/core && pnpm run test
+
+# 监听模式
+cd packages/core && pnpm run test:watch
+
+# 运行覆盖率测试
+cd packages/core && pnpm run test:coverage
+
+# 打开测试 UI
+cd packages/core && pnpm run test:ui
+```
+
+### E2E 测试（Playwright）
+
+```bash
+# 运行所有 E2E 测试
+cd playground && pnpm run test:e2e
+
+# 打开测试 UI
+cd playground && pnpm run test:e2e:ui
+
+# 调试模式
+cd playground && pnpm run test:e2e:debug
+```
+
+### 测试覆盖率
+
+```bash
+# 生成覆盖率报告
+cd packages/core && pnpm run test:coverage
+
+# 查看 HTML 报告
+open packages/core/coverage/index.html
+```
+
 ## Monorepo
 
 | 包 | 职责 |
