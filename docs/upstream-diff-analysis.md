@@ -1,8 +1,14 @@
 # 上游库 (react-grid-layout v2) vs 主仓 差异分析
 
 > 分析日期: 2026-06-26
-> 上游库路径: `git-repo/react-grid-layout/`
-> 主仓路径: `packages/core/`
+> 上游库路径: `git-repo/react-grid-layout/` (react-grid-layout v2, TS 版本)
+> 主仓路径: `packages/core/` (基于 react-grid-layout v1 JS 版本重构为 TS)
+
+## 背景说明
+
+- **主仓 (rc-ts-grid-layout)**: 基于 react-grid-layout **v1 (JS 版本)** 重构为 TypeScript 函数组件实现
+- **上游库 (git-repo/react-grid-layout/)**: react-grid-layout **v2 (TS 版本)**，在本项目之后发布
+- 本项目参考了 v2 的可组合接口设计（Compactor、PositionStrategy、LayoutConstraint），但保持 v1 API 的向后兼容性
 
 ---
 
