@@ -5,9 +5,9 @@
  */
 
 import type { CompactType, Layout, LayoutItem } from './type';
-import { collides, getAllCollisions, getFirstCollision, getStatics } from './collision';
+import { collides, getAllCollisions, getFirstCollision } from './collision';
 import { sortLayoutItems } from './sort';
-import { bottom, cloneLayoutItem } from './layout';
+import { bottom, cloneLayout, cloneLayoutItem, getStatics } from './layout';
 
 const heightWidth = { x: 'w', y: 'h' } as const;
 
