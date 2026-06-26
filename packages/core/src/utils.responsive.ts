@@ -64,11 +64,11 @@ export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
 	cols: number,
 	compactType: CompactType,
 ): Layout => {
-	// If it already exists, just return it.
+	// 如果已存在，直接返回
 	if (layouts[breakpoint]) {
 		return cloneLayout(layouts[breakpoint]);
 	}
-	// Find or generate the next layout
+	// 查找或生成新布局
 	let layout = layouts[lastBreakpoint];
 	const breakpointsSorted = sortBreakpoints(breakpoints);
 	const breakpointsAbove = breakpointsSorted.slice(breakpointsSorted.indexOf(breakpoint));
@@ -79,7 +79,7 @@ export const findOrGenerateResponsiveLayout = <T extends Breakpoint>(
 			break;
 		}
 	}
-	layout = cloneLayout(layout || []); // clone layout so we don't modify existing items
+	layout = cloneLayout(layout || []); // 克隆布局，避免修改现有项
 	return compact(correctBounds(layout, { cols }), compactType, cols);
 };
 

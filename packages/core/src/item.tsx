@@ -153,7 +153,7 @@ const GridItem = (props: ItemProps) => {
 						offsetParent.scrollLeft,
 				};
 				setDragging(position);
-				// Call callback with this data
+				// 使用此数据调用回调
 				const { x, y } = calcXY(
 					innerProps.current.positionParams,
 					position.top,
@@ -298,7 +298,7 @@ const GridItem = (props: ItemProps) => {
 		() => calcGridItemPosition(positionParams, 0, 0, cols, 0),
 		[cols, positionParams],
 	);
-	// Calculate min/max constraints using our min & maxes
+	// 使用最小/最大值计算约束
 	const mins = useMemo(
 		() => calcGridItemPosition(positionParams, 0, 0, minW, minH),
 		[minH, minW, positionParams],

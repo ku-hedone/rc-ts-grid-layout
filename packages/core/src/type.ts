@@ -14,7 +14,7 @@ export type LayoutItem = {
 	static?: boolean;
 	isDraggable?: boolean;
 	isResizable?: boolean;
-	resizeHandles?: ResizeHandle[]; // 假设 ResizeHandleAxis 是已定义的类型
+	resizeHandles?: ResizeHandle[]; // 缩放把手方向数组
 	isBounded?: boolean;
 };
 export type Layout = LayoutItem[];
@@ -28,4 +28,4 @@ export type Position = {
 
 export type PartialPosition = { left: number; top: number };
 
-export type CompactType = 'horizontal' | 'vertical' | 'unset' | undefined;
+export type CompactType = 'horizontal' | 'vertical' | null | undefined;

@@ -14,11 +14,11 @@ export type DragNativeEvent = Parameters<DragEventHandler<HTMLDivElement>>[numbe
 export type DroppingPosition = { left: number; top: number; e: DragNativeEvent };
 
 type InnerHandler<T> = (
-	layout: Layout, // 假设 Layout 是之前定义好的类型
+	layout: Layout, // 布局数组
 	oldItem: LayoutItem | undefined,
 	newItem: LayoutItem | undefined,
 	placeholder: LayoutItem | undefined,
-	event: T, // 假设 Event 也是已经定义好的类型
+	event: T, // 事件对象
 	element?: HTMLElement,
 ) => void;
 
@@ -58,7 +58,7 @@ export interface RGLProps {
 	allowOverlap?: boolean;
 
 	onLayoutChange?: (layout: Layout) => void;
-	// callback
+	// 回调函数
 	onDrag?: DragHandler;
 	onDragStart?: DragHandler;
 	onDragStop?: DragHandler;
@@ -86,8 +86,8 @@ export interface RGLProps {
 	 * 以避免冲突。`wrapperProps` 还支持传入 `style` 和 `className` 以控制样式。
 	 */
 	wrapperProps?: {
-		// useCSSTransforms === true will omit 'transform' | 'WebkitTransform' | 'MozTransform' | 'msTransform' | 'OTransform'
-		// useCSSTransforms === false will omit 'top' | 'left'
+		// useCSSTransforms === true 时省略 'transform' | 'WebkitTransform' | 'MozTransform' | 'msTransform' | 'OTransform'
+		// useCSSTransforms === false 时省略 'top' | 'left'
 		style?: CSSProperties;
 		className?: string;
 	};

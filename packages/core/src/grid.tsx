@@ -31,7 +31,7 @@ import './grid.css';
 import 'react-resizable/css/styles.css';
 import type { DragEventHandler, ReactElement, ReactNode, FC } from 'react';
 import type { DragNativeEvent, DroppingPosition, RGLProps } from './type.rgl';
-import type { Layout, LayoutItem } from './type';
+import type { CompactType, Layout, LayoutItem } from './type';
 import type { ItemProps } from './type.item';
 import type { ResizeHandle } from 'react-resizable';
 
@@ -51,15 +51,15 @@ const defaultDroppingItem = {
 	w: 1,
 };
 
-// case 1
-// wrapper -> layout -> gird-layout
-// calc next-layout
-// if next-layout !== layout
-// callback onLayoutChange to update wrapper layout
+// 场景 1
+// wrapper -> layout -> grid-layout
+// 计算 next-layout
+// 如果 next-layout !== layout
+// 回调 onLayoutChange 更新 wrapper 的 layout
 
-// case 2
-// update wrapper layout
-// grid-layout update inner-layout
+// 场景 2
+// 更新 wrapper 的 layout
+// grid-layout 更新 inner-layout
 
 const GridLayout: FC<RGLProps> = memo(
 	({
@@ -71,7 +71,7 @@ const GridLayout: FC<RGLProps> = memo(
 		draggableHandle = '',
 		draggableCancel = '',
 		rowHeight = 150,
-		maxRows = Infinity, // infinite vertical growth
+		maxRows = Infinity, // 无限垂直增长
 		layout = defaultLayout,
 		margin = defaultMargin,
 		isBounded = false,
@@ -82,7 +82,7 @@ const GridLayout: FC<RGLProps> = memo(
 		useCSSTransforms = true,
 		transformScale = 1,
 		verticalCompact = true,
-		compactType = 'vertical',
+		compactType = 'vertical' as CompactType,
 		preventCollision = false,
 		droppingItem = defaultDroppingItem,
 		resizeHandles = defaultResizeHandles,
@@ -111,15 +111,15 @@ const GridLayout: FC<RGLProps> = memo(
 
 		const lastLayout = useRef<Layout>(layout);
 		/**
-		 * previous item layout
+		 * 上一个布局项
 		 */
 		const old = useRef<LayoutItem>();
 		const droppingDOM = useRef<ReactElement>();
 		const lastRect = useRef<Rect>();
 		const resizing = useRef(false);
 		const dragEnterCount = useRef(0);
-		// finally compact type
-		// Legacy support for verticalCompact: false
+		// 最终紧凑类型
+		// 兼容 verticalCompact: false 的旧用法
 		const innerCompactType = useMemo(
 			() =>
 				genCompactType({
@@ -166,7 +166,7 @@ const GridLayout: FC<RGLProps> = memo(
 				: margin[1];
 			return nbRow * rowHeight + (nbRow - 1) * margin[1] + containerPaddingY * 2 + 'px';
 		}, [autoSize, containerPadding, innerLayout, margin, rowHeight]);
-		// gen a placeholder when resizing or moving
+		// 拖拽或调整大小时生成占位元素
 		const placeholder = useMemo(() => {
 			// console.log('placeholder rect', rect);
 			if (rect) {
@@ -224,8 +224,8 @@ const GridLayout: FC<RGLProps> = memo(
 			},
 			[onLayoutChange],
 		);
-		// when layout or children update
-		// remove placeholder
+		// 当 layout 或 children 更新时
+		// 移除占位元素
 		const removeDroppingPlaceholder = useCallback(() => {
 			const nextLayout = compact(
 				innerLayout.filter((l) => l.i !== droppingItem.i),
@@ -242,16 +242,16 @@ const GridLayout: FC<RGLProps> = memo(
 		}, [allowOverlap, cols, droppingItem.i, innerCompactType, innerLayout]);
 
 		const preventBrowserNativeAction = useCallback((e: DragNativeEvent) => {
-			// Prevent any browser native action
+			// 阻止浏览器默认行为
 			e.preventDefault();
 			e.stopPropagation();
 		}, []);
-		// onDrop
+		// 放置事件处理
 		const onInnerDrop: DragHandler = useCallback(
 			(e) => {
 				preventBrowserNativeAction(e);
 				const item = innerLayout.find((l) => l.i === droppingItem.i);
-				// reset dragEnter counter on drop
+				// 放置时重置 dragEnter 计数器
 				dragEnterCount.current = 0;
 				removeDroppingPlaceholder();
 				if (typeof onDrop === 'function') {
@@ -268,23 +268,23 @@ const GridLayout: FC<RGLProps> = memo(
 				removeDroppingPlaceholder,
 			],
 		);
-		// onDragLeave
+		// 拖拽离开事件处理
 		const onInnerDragLeave: DragHandler = useCallback(
 			(e) => {
 				preventBrowserNativeAction(e);
 				dragEnterCount.current--;
-				// onDragLeave can be triggered on each layout's child.
-				// But we know that count of dragEnter and dragLeave events
-				// will be balanced after leaving the layout's container
-				// so we can increase and decrease count of dragEnter and
-				// when it'll be equal to 0 we'll remove the placeholder
+				// onDragLeave 会在布局的每个子元素上触发。
+				// 但 dragEnter 和 dragLeave 事件的触发次数
+				// 在离开布局容器后会保持平衡，
+				// 因此可以通过增减 dragEnter 计数，
+				// 当计数为 0 时移除占位元素
 				if (dragEnterCount.current === 0) {
 					removeDroppingPlaceholder();
 				}
 			},
 			[preventBrowserNativeAction, removeDroppingPlaceholder],
 		);
-		// onDragEnter
+		// 拖拽进入事件处理
 		const onInnerDragEnter: DragHandler = useCallback(
 			(e) => {
 				preventBrowserNativeAction(e);
@@ -292,13 +292,13 @@ const GridLayout: FC<RGLProps> = memo(
 			},
 			[preventBrowserNativeAction],
 		);
-		// Called while dragging an element. Part of browser native drag/drop API.
-		// Native event target might be the layout itself, or an element within the layout.
+		// 拖拽元素时触发，属于浏览器原生拖放 API。
+		// 原生事件目标可能是布局容器本身，也可能是布局内的某个元素。
 		const onInnerDragOver: DragHandler = useCallback(
 			(e) => {
 				preventBrowserNativeAction(e);
-				// Allow user to customize the dropping item or short-circuit the drop based on the results
-				// of the `onDragOver(e: Event)` callback.
+				// 允许用户自定义放置项，或根据 onDragOver(e: Event) 回调的结果
+				// 提前终止放置操作。
 				if (typeof onDropDragOver === 'function') {
 					const onDragOverResult = onDropDragOver(e);
 					if (onDragOverResult === false) {
@@ -308,8 +308,8 @@ const GridLayout: FC<RGLProps> = memo(
 						return false;
 					}
 					const { w, h, ...dropItem } = { ...droppingItem, ...onDragOverResult };
-					const gridRect = e.currentTarget.getBoundingClientRect(); // The grid's position in the viewport
-					// Calculate the mouse position relative to the grid
+					const gridRect = e.currentTarget.getBoundingClientRect(); // 获取网格在视口中的位置
+					// 计算鼠标相对于网格的位置
 					const layerX = e.clientX - gridRect.left;
 					const layerY = e.clientY - gridRect.top;
 					const position = {
@@ -380,7 +380,7 @@ const GridLayout: FC<RGLProps> = memo(
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				if (item) {
 					const { w, h, x, y } = item;
-					// Create placeholder (display only)
+					// 创建占位元素（仅用于显示）
 					const placeholder: Rect = {
 						w,
 						h,
@@ -408,7 +408,7 @@ const GridLayout: FC<RGLProps> = memo(
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
 				if (item) {
 					/**
-					 * placeholder rect info
+					 * 占位元素的矩形信息
 					 */
 					const nextRect: Rect = {
 						w: item.w,
@@ -419,7 +419,7 @@ const GridLayout: FC<RGLProps> = memo(
 						i,
 						static: true,
 					};
-					// Move the element to the dragged location.
+					// 将元素移动到拖拽位置。
 					const isUserAction = true;
 					const currentLayout = moveElement(
 						innerPropsRef.current.layout,
@@ -459,7 +459,7 @@ const GridLayout: FC<RGLProps> = memo(
 				if (lastRect.current) {
 					const item = getLayoutItem(innerPropsRef.current.layout, i);
 					if (item) {
-						// Move the element here
+						// 将元素移动到此处
 						const isUserAction = true;
 						const currentLayout = moveElement(
 							innerPropsRef.current.layout,
@@ -493,7 +493,7 @@ const GridLayout: FC<RGLProps> = memo(
 			},
 			[allowOverlap, cols, onDragStop, preventCollision],
 		);
-		// resize relation logic
+		// 调整大小相关逻辑
 		const onInnerResizeStart: Required<ItemProps>['onResizeStart'] = useCallback(
 			(i, _w, _h, { e, node }) => {
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
@@ -536,8 +536,8 @@ const GridLayout: FC<RGLProps> = memo(
 							}
 							shouldMoveItem = true;
 						}
-						// Something like quad tree should be used
-						// to find collisions faster
+						// 应使用类似四叉树的结构
+						// 以更快地检测碰撞
 						if (preventCollision && !allowOverlap) {
 							const collisions = getAllCollisions(innerPropsRef.current.layout, {
 								...item,
@@ -548,9 +548,9 @@ const GridLayout: FC<RGLProps> = memo(
 							}).filter((layoutItem) => layoutItem.i !== item.i);
 							hasCollisions = collisions.length > 0;
 
-							// If we're colliding, we need adjust the placeholder.
+							// 如果发生碰撞，需要调整占位元素。
 							if (hasCollisions) {
-								// Reset layoutItem dimensions if there were collisions
+								// 如果发生碰撞，重置布局项尺寸
 								y = item.y;
 								h = item.h;
 								x = item.x;
@@ -566,10 +566,10 @@ const GridLayout: FC<RGLProps> = memo(
 					},
 				);
 				if (item) {
-					// Shouldn't ever happen, but typechecking makes it necessary
+					// 理论上不会出现，但类型检查要求处理此情况
 					let finalLayout = nextLayout;
 					if (shouldMoveItem) {
-						// Move the element to the new position.
+						// 将元素移动到新位置。
 						const isUserAction = true;
 						finalLayout = moveElement(
 							nextLayout,
@@ -583,7 +583,7 @@ const GridLayout: FC<RGLProps> = memo(
 							allowOverlap,
 						);
 					}
-					// Create placeholder element (display only)
+					// 创建占位元素（仅用于显示）
 					const placeholder: Rect = {
 						w: item.w,
 						h: item.h,
@@ -602,7 +602,7 @@ const GridLayout: FC<RGLProps> = memo(
 						const nextInnerLayout = allowOverlap
 							? finalLayout
 							: compact(finalLayout, innerPropsRef.current.compactType, cols);
-						// Re-compact the newLayout and set the drag placeholder.
+						// 重新紧凑排列布局并设置拖拽占位元素。
 						if (!isEqual(lastRect.current, placeholder)) {
 							setRect(placeholder);
 							lastRect.current = placeholder;
@@ -651,9 +651,9 @@ const GridLayout: FC<RGLProps> = memo(
 					if (!item) {
 						return null;
 					}
-					// Determine user manipulations possible.
-					// If an item is static, it can't be manipulated by default.
-					// Any properties defined directly on the grid item will take precedence.
+					// 确定用户可执行的操作。
+					// 静态项默认不可操作。
+					// 直接定义在网格项上的属性优先级更高。
 					const { w, h, x, y, i, minH, minW, maxH, maxW } = item;
 					const draggable =
 						typeof item.isDraggable === 'boolean'
@@ -664,7 +664,7 @@ const GridLayout: FC<RGLProps> = memo(
 							? item.isResizable
 							: !item.static && isResizable;
 					const resizeHandlesOptions = item.resizeHandles || resizeHandles;
-					// isBounded set on child if set on parent, and child is not explicitly false
+					// 如果父级设置了 isBounded，则子项也继承，除非子项显式设为 false
 					const bounded = draggable && isBounded && item.isBounded !== false;
 					return (
 						<GridItem
@@ -754,13 +754,13 @@ const GridLayout: FC<RGLProps> = memo(
 		);
 
 		useEffect(() => {
-			//  not in dragging or resizing
+			// 非拖拽或调整大小状态下
 			if (!lastRect.current) {
 				setInnerLayout(latestLayout);
 			}
 		}, [latestLayout]);
 
-		// init layout
+		// 初始化布局
 		useLayoutEffect(() => {
 			if (!mounted) {
 				setMounted(true);
@@ -770,8 +770,9 @@ const GridLayout: FC<RGLProps> = memo(
 		useEffect(() => {
 			// const previousLayout = lastLayout.current;
 			if (mounted) {
-				// Possibly call back with layout on mount. This should be done after correcting the layout width
-				// to ensure we don't rerender with the wrong width.
+				// 挂载后可能需要回调 layout 变更。
+				// 应在修正布局宽度之后执行，
+				// 以确保不会以错误的宽度重新渲染。
 				onLayoutMaybeChanged(innerLayout, lastLayout.current);
 			}
 		}, [innerLayout, mounted, onLayoutMaybeChanged]);

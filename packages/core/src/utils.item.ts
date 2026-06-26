@@ -45,6 +45,35 @@ export function calcGridItemPosition(
 	} else {
 		out.top = Math.round((rowHeight + margin[1]) * y + padding[1]);
 		out.left = Math.round((colWidth + margin[0]) * x + padding[0]);
+
+		// 非拖拽/缩放状态下，修正 Math.round() 导致的间距不一致问题。
+		// 由于取整，相邻项之间的实际间距可能与期望 margin 不同（如 0px 或 2px 而非 1px）。
+		// 通过计算下一个相邻项的起始位置与当前项结束位置的差值，调整宽高以维持一致的间距。
+		if (Number.isFinite(w)) {
+			// 计算下一列项的起始位置
+			const siblingLeft = Math.round(
+				(colWidth + margin[0]) * (x + w) + padding[0],
+			);
+			// 计算实际间距：相邻项起始位置 - (当前项左侧 + 当前项宽度)
+			const actualMarginRight = siblingLeft - out.left - out.width;
+			// 间距不一致时调整宽度
+			if (actualMarginRight !== margin[0]) {
+				out.width += actualMarginRight - margin[0];
+			}
+		}
+
+		if (Number.isFinite(h)) {
+			// 计算下一行项的起始位置
+			const siblingTop = Math.round(
+				(rowHeight + margin[1]) * (y + h) + padding[1],
+			);
+			// 计算实际间距：相邻项起始位置 - (当前项顶部 + 当前项高度)
+			const actualMarginBottom = siblingTop - out.top - out.height;
+			// 间距不一致时调整高度
+			if (actualMarginBottom !== margin[1]) {
+				out.height += actualMarginBottom - margin[1];
+			}
+		}
 	}
 	return out;
 }

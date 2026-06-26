@@ -12,10 +12,10 @@ type ResizeHandleFunc = (
 ) => Position;
 
 /**
- * Return the bottom coordinate of the layout.
+ * 返回布局的底部坐标。
  *
- * @param  {Array} layout Layout array.
- * @return {Number}       Bottom coordinate.
+ * @param  {Array} layout 布局数组。
+ * @return {Number}       底部坐标。
  */
 export function bottom(layout: Layout): number {
 	let max = 0;
@@ -41,8 +41,8 @@ export function cloneLayout(layout: Layout): Layout {
 	return newLayout;
 }
 
-// Modify a layoutItem inside a layout. Returns a new Layout,
-// does not mutate. Carries over all other LayoutItems unmodified.
+// 修改布局中的某个布局项。返回新布局，不会修改原布局。
+// 其他布局项保持不变。
 export function modifyLayout(layout: Layout, layoutItem: LayoutItem): Layout {
 	const newLayout = Array(layout.length);
 	for (let i = 0, len = layout.length; i < len; i++) {
@@ -58,8 +58,8 @@ export function modifyLayout(layout: Layout, layoutItem: LayoutItem): Layout {
 	return newLayout;
 }
 
-// Function to be called to modify a layout item.
-// Does defensive clones to ensure the layout is not modified.
+// 用于修改布局项的函数。
+// 会进行防御性克隆以确保不会修改原布局。
 export function withLayoutItem(
 	layout: Layout,
 	itemKey: string,
@@ -67,13 +67,13 @@ export function withLayoutItem(
 ): [Layout, LayoutItem | undefined] {
 	let item = getLayoutItem(layout, itemKey);
 	if (!item) return [layout, undefined];
-	item = cb(cloneLayoutItem(item)); // defensive clone then modify
-	// FIXME could do this faster if we already knew the index
+	item = cb(cloneLayoutItem(item)); // 防御性克隆后再修改
+	// FIXME 如果已知索引可以更快
 	layout = modifyLayout(layout, item);
 	return [layout, item];
 }
 
-// Fast path to cloning, since this is monomorphic
+// 快速克隆路径，因为结构是单态的
 export function cloneLayoutItem({
 	w,
 	h,
@@ -103,7 +103,7 @@ export function cloneLayoutItem({
 		maxW,
 		moved: !!moved,
 		static: !!item.static,
-		// These can be null/undefined
+		// 这些值可能为 null/undefined
 		isDraggable,
 		isResizable,
 		resizeHandles,
@@ -112,8 +112,8 @@ export function cloneLayoutItem({
 }
 
 /**
- * Comparing React `children` is a bit difficult. This is a good way to compare them.
- * This will catch differences in keys, order, and length.
+ * 比较 React `children` 比较困难。这是一个有效的比较方式。
+ * 可以检测 key、顺序和数量的差异。
  */
 export function childrenEqual(a: ReactNode, b: ReactNode): boolean {
 	const sameElement = deepEqual(
@@ -146,18 +146,18 @@ export const fastRGLPropsEqual = (
 ) => {
 	if (a === b) return true;
 	return (
-		// number
+		// 数值类型
 		a.width === b.width &&
 		a.cols === b.cols &&
 		a.rowHeight === b.rowHeight &&
 		a.maxRows === b.maxRows &&
 		a.transformScale === b.transformScale &&
-		// string
+		// 字符串类型
 		a.className === b.className &&
 		a.draggableCancel === b.draggableCancel &&
 		a.draggableHandle === b.draggableHandle &&
 		a.compactType === b.compactType &&
-		// boolean
+		// 布尔类型
 		a.verticalCompact === b.verticalCompact &&
 		a.autoSize === b.autoSize &&
 		a.isBounded === b.isBounded &&
@@ -167,7 +167,7 @@ export const fastRGLPropsEqual = (
 		a.preventCollision === b.preventCollision &&
 		a.useCSSTransforms === b.useCSSTransforms &&
 		a.isDroppable === b.isDroppable &&
-		// function
+		// 函数类型
 		a.onLayoutChange === b.onLayoutChange &&
 		a.onDragStart === b.onDragStart &&
 		a.onDrag === b.onDrag &&
@@ -176,11 +176,11 @@ export const fastRGLPropsEqual = (
 		a.onResize === b.onResize &&
 		a.onResizeStop === b.onResizeStop &&
 		a.onDrop === b.onDrop &&
-		// array
+		// 数组类型
 		isEqualImpl(a.resizeHandles, b.resizeHandles) &&
 		isEqualImpl(a.layout, b.layout) &&
 		isEqualImpl(a.margin, b.margin) &&
-		// object
+		// 对象类型
 		isEqualImpl(a.resizeHandle, b.resizeHandle) &&
 		isEqualImpl(a.style, b.style) &&
 		isEqualImpl(a.containerPadding, b.containerPadding) &&
@@ -190,7 +190,7 @@ export const fastRGLPropsEqual = (
 	);
 };
 
-// Like the above, but a lot simpler.
+// 类似上面的函数，但更简单。
 export function fastPositionEqual(a: Position, b: Position): boolean {
 	return (
 		a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height
@@ -198,28 +198,26 @@ export function fastPositionEqual(a: Position, b: Position): boolean {
 }
 
 /**
- * Given two layoutitems, check if they collide.
+ * 检查两个布局项是否碰撞。
  */
 export function collides(l1: LayoutItem, l2: LayoutItem): boolean {
-	if (l1.i === l2.i) return false; // same element
-	if (l1.x + l1.w <= l2.x) return false; // l1 is left of l2
-	if (l1.x >= l2.x + l2.w) return false; // l1 is right of l2
-	if (l1.y + l1.h <= l2.y) return false; // l1 is above l2
-	if (l1.y >= l2.y + l2.h) return false; // l1 is below l2
-	return true; // boxes overlap
+	if (l1.i === l2.i) return false; // 同一元素
+	if (l1.x + l1.w <= l2.x) return false; // l1 在 l2 左侧
+	if (l1.x >= l2.x + l2.w) return false; // l1 在 l2 右侧
+	if (l1.y + l1.h <= l2.y) return false; // l1 在 l2 上方
+	if (l1.y >= l2.y + l2.h) return false; // l1 在 l2 下方
+	return true; // 矩形重叠
 }
 
 /**
- * Given a layout, compact it. This involves going down each y coordinate and removing gaps
- * between items.
+ * 对布局进行紧凑排列。遍历每个 y 坐标，消除元素间的间隙。
  *
- * Does not modify layout items (clones). Creates a new layout array.
+ * 不会修改原始布局项（克隆处理）。创建新的布局数组。
  *
- * @param  {Array} layout Layout.
- * @param  {Boolean} verticalCompact Whether or not to compact the layout
- *   vertically.
- * @param  {Boolean} allowOverlap When `true`, allows overlapping grid items.
- * @return {Array}       Compacted Layout.
+ * @param  {Array} layout 布局。
+ * @param  {Boolean} verticalCompact 是否进行垂直紧凑排列。
+ * @param  {Boolean} allowOverlap 为 `true` 时允许网格项重叠。
+ * @return {Array}       紧凑排列后的布局。
  */
 export function compact(
 	layout: Layout,
@@ -227,11 +225,11 @@ export function compact(
 	cols: number,
 	allowOverlap?: boolean,
 ): Layout {
-	// Statics go in the compareWith array right away so items flow around them.
+	// 静态元素立即放入比较数组，使其他元素围绕它们排列。
 	const compareWith = getStatics(layout);
-	// We go through the items by row and column.
+	// 按行和列遍历元素。
 	const sorted = sortLayoutItems(layout, compactType);
-	// Holding for new items.
+	// 存放新布局项。
 	const out = Array(layout.length);
 
 	for (let i = 0, len = sorted.length; i < len; i++) {
@@ -239,19 +237,19 @@ export function compact(
 		if (innerLayout) {
 			let l = cloneLayoutItem(innerLayout);
 
-			// Don't move static elements
+			// 不移动静态元素
 			if (!l.static) {
 				l = compactItem(compareWith, l, compactType, cols, sorted, allowOverlap);
 
-				// Add to comparison array. We only collide with items before this one.
-				// Statics are already in this array.
+				// 添加到比较数组。只与之前的元素发生碰撞。
+				// 静态元素已在此数组中。
 				compareWith.push(l);
 			}
 
-			// Add to output array to make sure they still come out in the right order.
+			// 添加到输出数组，确保元素保持正确的顺序。
 			out[layout.indexOf(innerLayout)] = l;
 
-			// Clear moved flag, if it exists.
+			// 清除 moved 标记（如果存在）。
 			l.moved = false;
 		}
 	}
@@ -261,7 +259,7 @@ export function compact(
 
 const heightWidth = { x: 'w', y: 'h' } as const;
 /**
- * Before moving item down, it will check if the movement will cause collisions and move those items down before.
+ * 在向下移动元素之前，检查移动是否会导致碰撞，并先移动那些元素。
  */
 function resolveCompactionCollision(
 	layout: Layout,
@@ -277,15 +275,15 @@ function resolveCompactionCollision(
 		})
 		.indexOf(item.i);
 
-	// Go through each item we collide with.
+	// 遍历与之碰撞的每个元素。
 	for (let i = itemIndex + 1; i < layout.length; i++) {
 		const otherItem = layout[i];
 		if (otherItem) {
-			// Ignore static items
+			// 忽略静态元素
 			if (otherItem.static) continue;
 
-			// Optimization: we can break early if we know we're past this el
-			// We can do this b/c it's a sorted layout
+			// 优化：如果已知超过该元素可以提前退出
+			// 因为布局已排序，所以可以这样做
 			if (otherItem.y > item.y + item.h) break;
 
 			if (collides(item, otherItem)) {
@@ -297,15 +295,15 @@ function resolveCompactionCollision(
 	item[axis] = moveToCoord;
 }
 function ensurePositivePosition(item: LayoutItem): LayoutItem {
-	// Ensure that there are no negative positions
+	// 确保没有负坐标
 	item.y = Math.max(item.y, 0);
 	item.x = Math.max(item.x, 0);
 	return item;
 }
 /**
- * Compact an item in the layout.
+ * 对布局中的元素进行紧凑排列。
  *
- * Modifies item.
+ * 会修改元素。
  *
  */
 export function compactItem(
@@ -319,16 +317,16 @@ export function compactItem(
 	const compactV = compactType === 'vertical';
 	const compactH = compactType === 'horizontal';
 	if (compactV) {
-		// Bottom 'y' possible is the bottom of the layout.
-		// This allows you to do nice stuff like specify {y: Infinity}
-		// This is here because the layout must be sorted in order to get the correct bottom `y`.
+		// 最小 y 坐标为布局的底部。
+		// 这允许使用 {y: Infinity} 这样的写法。
+		// 布局必须先排序才能获取正确的底部 `y` 值。
 		l.y = Math.min(bottom(compareWith), l.y);
-		// Move the element up as far as it can go without colliding.
+		// 尽可能向上移动元素，直到发生碰撞。
 		while (l.y > 0 && !getFirstCollision(compareWith, l)) {
 			l.y--;
 		}
 	} else if (compactH) {
-		// Move the element left as far as it can go without colliding.
+		// 尽可能向左移动元素，直到发生碰撞。
 		while (l.x > 0 && !getFirstCollision(compareWith, l)) {
 			l.x--;
 		}
@@ -336,20 +334,20 @@ export function compactItem(
 	if (!compactType && allowOverlap) {
 		return ensurePositivePosition(l);
 	}
-	// Move it down, and keep moving it down if it's colliding.
+	// 向下移动元素，如果发生碰撞则继续下移。
 	let collides = getFirstCollision(compareWith, l);
-	// Checking the compactType null value to avoid breaking the layout when overlapping is allowed.
+	// 检查 compactType 是否为 null，以避免在允许重叠时破坏布局。
 	while (collides) {
 		if (compactH) {
 			resolveCompactionCollision(fullLayout, l, collides.x + collides.w, 'x');
 		} else {
 			resolveCompactionCollision(fullLayout, l, collides.y + collides.h, 'y');
 		}
-		// Since we can't grow without bounds horizontally, if we've overflown, let's move it down and try again.
+		// 水平方向不能无限增长，如果溢出则向下移动后重试。
 		if (compactH && l.x + l.w > cols) {
 			l.x = cols - l.w;
 			l.y++;
-			// ALso move element as left as we can
+			// 同时尽可能将元素向左移动
 			while (l.x > 0 && !getFirstCollision(compareWith, l)) {
 				l.x--;
 			}
@@ -360,29 +358,29 @@ export function compactItem(
 }
 
 /**
- * Given a layout, make sure all elements fit within its bounds.
+ * 确保布局中的所有元素都在边界内。
  *
- * Modifies layout items.
+ * 会修改布局项。
  *
- * @param  {Array} layout Layout array.
- * @param  {Number} bounds Number of columns.
+ * @param  {Array} layout 布局数组。
+ * @param  {Number} bounds 列数。
  */
 export function correctBounds(layout: Layout, bounds: { cols: number }): Layout {
 	const collidesWith = getStatics(layout);
 	for (let i = 0, len = layout.length; i < len; i++) {
 		const l = layout[i];
 		if (l) {
-			// Overflows right
+			// 右侧溢出
 			if (l.x + l.w > bounds.cols) l.x = bounds.cols - l.w;
-			// Overflows left
+			// 左侧溢出
 			if (l.x < 0) {
 				l.x = 0;
 				l.w = bounds.cols;
 			}
 			if (!l.static) collidesWith.push(l);
 			else {
-				// If this is static and collides with other statics, we must move it down.
-				// We have to do something nicer than just letting them overlap.
+				// 如果是静态元素且与其他静态元素碰撞，必须向下移动。
+				// 不能让它们直接重叠。
 				while (getFirstCollision(collidesWith, l)) {
 					l.y++;
 				}
@@ -393,11 +391,11 @@ export function correctBounds(layout: Layout, bounds: { cols: number }): Layout 
 }
 
 /**
- * Get a layout item by ID. Used so we can override later on if necessary.
+ * 根据 ID 获取布局项。便于后续覆写。
  *
- * @param  {Array}  layout Layout array.
+ * @param  {Array}  layout 布局数组。
  * @param  {String} id     ID
- * @return {LayoutItem}    Item at ID.
+ * @return {LayoutItem}    对应 ID 的布局项。
  */
 export function getLayoutItem(layout: Layout, id: string): LayoutItem | undefined {
 	for (let i = 0, len = layout.length; i < len; i++) {
@@ -410,12 +408,11 @@ export function getLayoutItem(layout: Layout, id: string): LayoutItem | undefine
 }
 
 /**
- * Returns the first item this layout collides with.
- * It doesn't appear to matter which order we approach this from, although
- * perhaps that is the wrong thing to do.
+ * 返回与指定布局项碰撞的第一个元素。
+ * 遍历顺序似乎不影响结果，但这可能是不正确的。
  *
- * @param  {Object} layoutItem Layout item.
- * @return {Object|undefined}  A colliding layout item, or undefined.
+ * @param  {Object} layoutItem 布局项。
+ * @return {Object|undefined}  碰撞的布局项，或 undefined。
  */
 export function getFirstCollision(
 	layout: Layout,
@@ -437,23 +434,23 @@ export function getAllCollisions(
 }
 
 /**
- * Get all static elements.
- * @param  {Array} layout Array of layout objects.
- * @return {Array}        Array of static layout items..
+ * 获取所有静态元素。
+ * @param  {Array} layout 布局对象数组。
+ * @return {Array}        静态布局项数组。
  */
 export function getStatics(layout: Layout): Array<LayoutItem> {
 	return layout.filter((l) => l.static);
 }
 
 /**
- * Move an element. Responsible for doing cascading movements of other elements.
+ * 移动元素。负责处理其他元素的级联移动。
  *
- * Modifies layout items.
+ * 会修改布局项。
  *
- * @param  {Array}      layout            Full layout to modify.
- * @param  {LayoutItem} l                 element to move.
- * @param  {Number}     [x]               X position in grid units.
- * @param  {Number}     [y]               Y position in grid units.
+ * @param  {Array}      layout            要修改的完整布局。
+ * @param  {LayoutItem} l                 要移动的元素。
+ * @param  {Number}     [x]               网格单位的 X 坐标。
+ * @param  {Number}     [y]               网格单位的 Y 坐标。
  */
 export function moveElement(
 	layout: Layout,
@@ -466,28 +463,24 @@ export function moveElement(
 	cols: number,
 	allowOverlap?: boolean,
 ): Layout {
-	// If this is static and not explicitly enabled as draggable,
-	// no move is possible, so we can short-circuit this immediately.
+	// 如果元素是静态的且未显式设置为可拖拽，
+	// 则无法移动，可以直接返回。
 	if (l.static && l.isDraggable !== true) return layout;
 
-	// Short-circuit if nothing to do.
+	// 如果没有变化则直接返回。
 	if (l.y === y && l.x === x) return layout;
 
-	console.log(
-		`Moving element ${l.i} to [${String(x)},${String(y)}] from [${l.x},${l.y}]`,
-	);
 	const oldX = l.x;
 	const oldY = l.y;
 
-	// This is quite a bit faster than extending the object
+	// 直接赋值比扩展对象快得多
 	if (typeof x === 'number') l.x = x;
 	if (typeof y === 'number') l.y = y;
 	l.moved = true;
 
-	// If this collides with anything, move it.
-	// When doing this comparison, we have to sort the items we compare with
-	// to ensure, in the case of multiple collisions, that we're getting the
-	// nearest collision.
+	// 如果发生碰撞则移动元素。
+	// 进行比较时需要排序，以确保在多个碰撞情况下
+	// 获取最近的碰撞。
 	let sorted = sortLayoutItems(layout, compactType);
 	const movingUp =
 		compactType === 'vertical' && typeof y === 'number'
@@ -495,29 +488,25 @@ export function moveElement(
 			: compactType === 'horizontal' && typeof x === 'number'
 				? oldX >= x
 				: false;
-	// $FlowIgnore acceptable modification of read-only array as it was recently cloned
+	// $FlowIgnore 可接受的只读数组修改，因为是最近克隆的
 	if (movingUp) sorted = [...sorted].reverse();
 	const collisions = getAllCollisions(sorted, l);
 	const hasCollisions = collisions.length > 0;
 
-	// We may have collisions. We can short-circuit if we've turned off collisions or
-	// allowed overlap.
+	// 可能存在碰撞。如果关闭碰撞检测或允许重叠则直接返回。
 	if (hasCollisions && allowOverlap) {
-		// Easy, we don't need to resolve collisions. But we *did* change the layout,
-		// so clone it on the way out.
+		// 不需要解决碰撞，但布局已改变，返回时需克隆。
 		return cloneLayout(layout);
 	} else if (hasCollisions && preventCollision) {
-		// If we are preventing collision but not allowing overlap, we need to
-		// revert the position of this element so it goes to where it came from, rather
-		// than the user's desired location.
-		console.log(`Collision prevented on ${l.i}, reverting.`);
+		// 如果阻止碰撞但不允许重叠，需要将元素恢复到原始位置，
+		// 而不是用户期望的位置。
 		l.x = oldX;
 		l.y = oldY;
 		l.moved = false;
-		return layout; // did not change so don't clone
+		return layout; // 未改变，无需克隆
 	}
 
-	// Move each item that collides away from this element.
+	// 将每个碰撞的元素移开。
 	for (let i = 0, len = collisions.length; i < len; i++) {
 		const collision = collisions[i];
 		// console.log(
@@ -525,11 +514,11 @@ export function moveElement(
 		// );
 		if (collision) {
 			if (collision.moved) {
-				// Short circuit so we can't infinite loop
+				// 直接跳过以避免无限循环
 				continue;
 			}
 
-			// Don't move static items - we have to move *this* element away
+			// 不移动静态元素 - 必须移动当前元素
 			if (collision.static) {
 				layout = moveElementAwayFromCollision(
 					layout,
@@ -556,12 +545,12 @@ export function moveElement(
 }
 
 /**
- * This is where the magic needs to happen - given a collision, move an element away from the collision.
- * We attempt to move it up if there's room, otherwise it goes below.
+ * 核心逻辑 - 发生碰撞时，将元素移离碰撞位置。
+ * 如果上方有空间则上移，否则下移。
  *
- * @param  {Array} layout            Full layout to modify.
- * @param  {LayoutItem} collidesWith Layout item we're colliding with.
- * @param  {LayoutItem} itemToMove   Layout item we're moving.
+ * @param  {Array} layout            要修改的完整布局。
+ * @param  {LayoutItem} collidesWith 碰撞的布局项。
+ * @param  {LayoutItem} itemToMove   要移动的布局项。
  */
 export function moveElementAwayFromCollision(
 	layout: Layout,
@@ -572,18 +561,17 @@ export function moveElementAwayFromCollision(
 	cols: number,
 ): Layout {
 	const compactH = compactType === 'horizontal';
-	// Compact vertically if not set to horizontal
+	// 非水平模式时进行垂直紧凑排列
 	const compactV = compactType === 'vertical';
-	const preventCollision = collidesWith.static; // we're already colliding (not for static items)
+	const preventCollision = collidesWith.static; // 已经碰撞（静态元素除外）
 
-	// If there is enough space above the collision to put this element, move it there.
-	// We only do this on the main collision as this can get funky in cascades and cause
-	// unwanted swapping behavior.
+	// 如果碰撞位置上方有足够空间放置此元素，则移至该处。
+	// 仅在主碰撞时执行此操作，级联碰撞中可能导致意外的交换行为。
 	if (isUserAction) {
-		// Reset isUserAction flag because we're not in the main collision anymore.
+		// 重置 isUserAction 标记，因为已不在主碰撞中。
 		isUserAction = false;
 
-		// Make a mock item so we don't modify the item here, only modify in moveElement.
+		// 创建模拟项以避免在此处修改元素，仅在 moveElement 中修改。
 		const fakeItem: LayoutItem = {
 			x: compactH ? Math.max(collidesWith.x - itemToMove.w, 0) : itemToMove.x,
 			y: compactV ? Math.max(collidesWith.y - itemToMove.h, 0) : itemToMove.y,
@@ -598,11 +586,8 @@ export function moveElementAwayFromCollision(
 		const collisionWest =
 			firstCollision && collidesWith.x + collidesWith.w > firstCollision.x;
 
-		// No collision? If so, we can go up there; otherwise, we'll end up moving down as normal
+		// 无碰撞？如果有空间可以上移，否则按常规下移。
 		if (!firstCollision) {
-			console.log(
-				`Doing reverse collision on ${itemToMove.i} up to [${fakeItem.x},${fakeItem.y}].`,
-			);
 			return moveElement(
 				layout,
 				itemToMove,
@@ -662,17 +647,17 @@ export function moveElementAwayFromCollision(
 }
 
 /**
- * Helper to convert a number to a percentage string.
+ * 将数字转换为百分比字符串。
  *
- * @param  {Number} num Any number
- * @return {String}     That number as a percentage.
+ * @param  {Number} num 任意数字
+ * @return {String}     百分比字符串。
  */
 export function perc(num: number): string {
 	return num * 100 + '%';
 }
 
 /**
- * Helper functions to constrain dimensions of a GridItem
+ * 约束网格项尺寸的辅助函数
  */
 const constrainWidth = (
 	left: number,
@@ -766,7 +751,7 @@ const ordinalResizeHandlerMap = {
 };
 
 /**
- * Helper for clamping width and position when resizing an item.
+ * 调整元素大小时约束宽度和位置的辅助函数。
  */
 export function resizeItemInDirection(
 	direction: ResizeHandle,
@@ -774,7 +759,7 @@ export function resizeItemInDirection(
 	size: Position,
 	containerWidth: number,
 ): Position {
-	// Shouldn't be possible given types; that said, don't fail hard
+	// 根据类型定义不应该出现这种情况，但不要硬性报错
 	const ordinalHandler = ordinalResizeHandlerMap[direction];
 	// 只有 react-resizable 返回 异常 的 direction时 才会出现
 	if (!ordinalHandler) {
@@ -787,7 +772,7 @@ export function resizeItemInDirection(
 }
 
 export function setTransform({ top, left, width, height }: Position) {
-	// Replace unitless items with px
+	// 将无单位值替换为 px
 	const translate = `translate(${left}px,${top}px)`;
 	return {
 		transform: translate,
@@ -812,10 +797,10 @@ export function setTopLeft({ top, left, width, height }: Position) {
 }
 
 /**
- * Get layout items sorted from top left to right and down.
+ * 获取从左上到右下排序的布局项。
  *
- * @return {Array} Array of layout objects.
- * @return {Array}        Layout, sorted static items first.
+ * @return {Array} 布局对象数组。
+ * @return {Array}        排序后的布局，静态元素在前。
  */
 export function sortLayoutItems(layout: Layout, compactType: CompactType): Layout {
 	if (compactType === 'horizontal') return sortLayoutItemsByColRow(layout);
@@ -824,17 +809,17 @@ export function sortLayoutItems(layout: Layout, compactType: CompactType): Layou
 }
 
 /**
- * Sort layout items by row ascending and column ascending.
+ * 按行升序、列升序排列布局项。
  *
- * Does not modify Layout.
+ * 不修改原布局。
  */
 export function sortLayoutItemsByRowCol(layout: Layout): Layout {
-	// Slice to clone array as sort modifies
+	// slice 克隆数组，因为 sort 会修改原数组
 	return layout.slice(0).sort(function (a, b) {
 		if (a.y > b.y || (a.y === b.y && a.x > b.x)) {
 			return 1;
 		} else if (a.y === b.y && a.x === b.x) {
-			// Without this, we can get different sort results in IE vs. Chrome/FF
+			// 没有这个判断，IE 和 Chrome/FF 的排序结果可能不同
 			return 0;
 		}
 		return -1;
@@ -842,9 +827,9 @@ export function sortLayoutItemsByRowCol(layout: Layout): Layout {
 }
 
 /**
- * Sort layout items by column ascending then row ascending.
+ * 按列升序、行升序排列布局项。
  *
- * Does not modify Layout.
+ * 不修改原布局。
  */
 export function sortLayoutItemsByColRow(layout: Layout): Layout {
 	return layout.slice(0).sort(function (a, b) {
@@ -856,15 +841,15 @@ export function sortLayoutItemsByColRow(layout: Layout): Layout {
 }
 
 /**
- * Generate a layout using the initialLayout and children as a template.
- * Missing entries will be added, extraneous ones will be truncated.
+ * 使用 initialLayout 和 children 作为模板生成布局。
+ * 缺失的条目会被添加，多余的会被截断。
  *
- * Does not modify initialLayout.
+ * 不修改 initialLayout。
  *
- * @param  {Array}  initialLayout Layout passed in through props.
- * @param  {String} breakpoint    Current responsive breakpoint.
- * @param  {?String} compact      Compaction option.
- * @return {Array}                Working layout.
+ * @param  {Array}  initialLayout 通过 props 传入的布局。
+ * @param  {String} breakpoint    当前响应式断点。
+ * @param  {?String} compact      紧凑排列选项。
+ * @return {Array}                工作布局。
  */
 export function synchronizeLayoutWithChildren(
 	initialLayout: Layout | undefined,
@@ -875,25 +860,25 @@ export function synchronizeLayoutWithChildren(
 ): Layout {
 	const innerLayout = initialLayout || [];
 
-	// Generate one layout item per child.
+	// 为每个子元素生成一个布局项。
 	const layout: LayoutItem[] = [];
 	Children.forEach(children, (child) => {
-		// Child may not exist
+		// 子元素可能不存在
 		if (typeof child === 'object' && child && 'key' in child && child.key !== null) {
 			const exists = getLayoutItem(innerLayout, child.key + '');
 			const g = child.props['data-grid'];
-			// Don't overwrite the layout item if it's already in the initial layout.
-			// If it has a `data-grid` property, prefer that over what's in the layout.
+			// 如果布局项已存在于初始布局中则不覆盖。
+			// 如果有 `data-grid` 属性，优先使用它。
 			if (exists && !g) {
 				layout.push(cloneLayoutItem(exists));
 			} else {
-				// Hey, this item has a data-grid property, use it.
+				// 此项有 data-grid 属性，使用它。
 				if (g) {
-					// FIXME clone not really necessary here
+					// FIXME 此处克隆并非必需
 					layout.push(cloneLayoutItem({ ...g, i: child.key }));
 				} else {
-					// Nothing provided: ensure this is added to the bottom
-					// FIXME clone not really necessary here
+					// 没有提供数据：确保添加到底部
+					// FIXME 此处克隆并非必需
 					layout.push(
 						cloneLayoutItem({
 							w: 1,
@@ -908,17 +893,17 @@ export function synchronizeLayoutWithChildren(
 		}
 	});
 
-	// Correct the layout.
+	// 修正布局。
 	const correctedLayout = correctBounds(layout, { cols });
 	return allowOverlap ? correctedLayout : compact(correctedLayout, compactType, cols);
 }
 
 /**
- * Validate a layout. Throws errors.
+ * 验证布局。会抛出错误。
  *
- * @param  {Array}  layout        Array of layout items.
- * @param  {String} [contextName] Context name for errors.
- * @throw  {Error}                Validation error.
+ * @param  {Array}  layout        布局项数组。
+ * @param  {String} [contextName] 错误上下文名称。
+ * @throw  {Error}                验证错误。
  */
 export function validateLayout(layout: Layout, contextName = 'Layout'): void {
 	const subProps = ['x', 'y', 'w', 'h'] as const;
@@ -946,13 +931,13 @@ export function validateLayout(layout: Layout, contextName = 'Layout'): void {
 	}
 }
 
-// Legacy support for verticalCompact: false
+// 对 verticalCompact: false 的旧版兼容
 export function compactType(props?: {
 	verticalCompact: boolean;
 	compactType: CompactType;
 }): CompactType {
 	const { verticalCompact, compactType } = props || {};
-	return verticalCompact === false ? void 0 : compactType;
+	return verticalCompact === false ? null : compactType;
 }
 
 export const noop = () => {
@@ -982,22 +967,22 @@ export const fastGridItemPropsEqual = (
 	next: Record<string, unknown>,
 	isEqualImpl: (a: unknown, b: unknown) => boolean,
 ) => {
-	// children
+	// 子元素
 	if (prev === next) return true;
 	const areDroppingPositionEquals = droppingPositionCompare(
 		prev.DroppingPosition as DroppingPosition,
 		next.DroppingPosition as DroppingPosition,
 	);
 	return (
-		// object
+		// 对象类型
 		prev.children === next.children &&
 		prev.resizeHandle === next.resizeHandle &&
 		areDroppingPositionEquals &&
-		// function
+		// 函数类型
 		prev.onResizeStart === next.onResizeStart &&
 		prev.onResize === next.onResize &&
 		prev.onResizeStop === next.onResizeStop &&
-		// number
+		// 数值类型
 		prev.x === next.x &&
 		prev.y === next.y &&
 		prev.w === next.w &&
@@ -1010,13 +995,13 @@ export const fastGridItemPropsEqual = (
 		prev.rowHeight === next.rowHeight &&
 		prev.maxRows === next.maxRows &&
 		prev.containerWidth === next.containerWidth &&
-		// boolean
+		// 布尔类型
 		prev.isDraggable === next.isDraggable &&
 		prev.isResizable === next.isResizable &&
 		prev.isBounded === next.isBounded &&
-		// string
+		// 字符串类型
 		prev.i === next.i &&
-		// array
+		// 数组类型
 		isEqualImpl(prev.containerPadding, next.containerPadding) &&
 		isEqualImpl(prev.margin, next.margin)
 	);

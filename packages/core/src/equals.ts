@@ -1,6 +1,5 @@
 /**
- * Cache used to store references to objects, used for circular
- * reference checks.
+ * 用于存储对象引用的缓存，用于循环引用检查。
  */
 interface Cache<Key extends object, Value> {
   delete(key: Key): boolean;
@@ -10,21 +9,20 @@ interface Cache<Key extends object, Value> {
 
 interface State<Meta> {
   /**
-   * Cache used to identify circular references
+   * 用于识别循环引用的缓存
    */
   readonly cache: Cache<any, any> | undefined;
   /**
-   * Method used to determine equality of nested value.
+   * 用于确定嵌套值相等性的方法。
    */
   readonly equals: InternalEqualityComparator<Meta>;
   /**
-   * Additional value that can be used for comparisons.
+   * 可用于比较的附加数据。
    */
   meta: Meta;
   /**
-   * Whether the equality comparison is strict, meaning it matches
-   * all properties (including symbols and non-enumerable properties)
-   * with equal shape of descriptors.
+   * 是否为严格相等比较，即匹配所有属性（包括 symbol 和不可枚举属性），
+   * 并要求描述符结构相同。
    */
   readonly strict: boolean;
 }
@@ -40,40 +38,35 @@ interface Dictionary<Value = any> {
 
 interface ComparatorConfig<Meta> {
   /**
-   * Whether the arrays passed are equal in value. In strict mode, this includes
-   * additional properties added to the array.
+   * 传入的数组是否值相等。在严格模式下，还包括数组上附加的属性。
    */
   areArraysEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the dates passed are equal in value.
+   * 传入的日期是否值相等。
    */
   areDatesEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the maps passed are equal in value. In strict mode, this includes
-   * additional properties added to the map.
+   * 传入的 Map 是否值相等。在严格模式下，还包括 Map 上附加的属性。
    */
   areMapsEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the objects passed are equal in value. In strict mode, this includes
-   * non-enumerable properties added to the map, as well as symbol properties.
+   * 传入的对象是否值相等。在严格模式下，还包括不可枚举属性和 symbol 属性。
    */
   areObjectsEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the primitive wrappers passed are equal in value.
+   * 传入的原始类型包装对象是否值相等。
    */
   arePrimitiveWrappersEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the regexps passed are equal in value.
+   * 传入的正则表达式是否值相等。
    */
   areRegExpsEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the sets passed are equal in value. In strict mode, this includes
-   * additional properties added to the set.
+   * 传入的 Set 是否值相等。在严格模式下，还包括 Set 上附加的属性。
    */
   areSetsEqual: TypeEqualityComparator<any, Meta>;
   /**
-   * Whether the typed arrays passed are equal in value. In strict mode, this includes
-   * additional properties added to the typed array.
+   * 传入的类型化数组是否值相等。在严格模式下，还包括类型化数组上附加的属性。
    */
   areTypedArraysEqual: TypeEqualityComparator<any, Meta>;
 }
@@ -100,20 +93,17 @@ type InternalEqualityComparator<Meta> = (
   state: State<Meta>,
 ) => boolean;
 
-// We explicitly check for primitive wrapper types
+// 显式检查原始包装类型
 // eslint-disable-next-line @typescript-eslint/ban-types
 type PrimitiveWrapper = Boolean | Number | String;
 
 /**
- * Type which encompasses possible instances of TypedArray
- * classes.
+ * 涵盖 TypedArray 类可能实例的类型。
  *
- * **NOTE**: This does not include `BigInt64Array` and
- * `BitUint64Array` because those are part of ES2020 and
- * not supported by certain TS configurations. If using
- * either in `areTypedArraysEqual`, you can cast the
- * instance as `TypedArray` and it will work as expected,
- * because runtime checks will still work for those classes.
+ * **注意**：不包括 `BigInt64Array` 和 `BigUint64Array`，
+ * 因为它们属于 ES2020，某些 TS 配置不支持。如果在
+ * `areTypedArraysEqual` 中使用它们，可以将实例强转为
+ * `TypedArray`，运行时检查仍然适用于这些类。
  */
 type TypedArray =
   | Float32Array
@@ -134,36 +124,31 @@ type TypeEqualityComparator<Type, Meta = undefined> = (
 
 interface CustomEqualCreatorOptions<Meta> {
   /**
-   * Whether circular references should be supported. It causes the
-   * comparison to be slower, but for objects that have circular references
-   * it is required to avoid stack overflows.
+   * 是否支持循环引用。这会导致比较变慢，但对于存在循环引用的对象，
+   * 这是避免栈溢出所必需的。
    */
   circular?: boolean;
   /**
-   * Create a custom configuration of type-specific equality comparators.
-   * This receives the default configuration, which allows either replacement
-   * or supersetting of the default methods.
+   * 创建自定义的类型特定相等比较器配置。接收默认配置，
+   * 允许替换或扩展默认方法。
    */
   createCustomConfig?: CreateCustomComparatorConfig<Meta>;
   /**
-   * Create a custom internal comparator, which is used as an override to the
-   * default entry point for nested value equality comparisons. This is often
-   * used for doing custom logic for specific types (such as handling a specific
-   * class instance differently than other objects) or to incorporate `meta` in
-   * the comparison. See the recipes for examples.
+   * 创建自定义内部比较器，用于覆盖嵌套值相等比较的默认入口。
+   * 通常用于对特定类型执行自定义逻辑（如对特定类实例的处理
+   * 不同于其他对象），或在比较中引入 `meta`。详见使用示例。
    */
   createInternalComparator?: (
     compare: EqualityComparator<Meta>,
   ) => InternalEqualityComparator<Meta>;
   /**
-   * Create a custom `state` object passed between the methods. This allows for
-   * custom `cache` and/or `meta` values to be used.
+   * 创建自定义的 `state` 对象，在各方法间传递。允许使用自定义的
+   * `cache` 和/或 `meta` 值。
    */
   createState?: CreateState<Meta>;
   /**
-   * Whether the equality comparison is strict, meaning it matches
-   * all properties (including symbols and non-enumerable properties)
-   * with equal shape of descriptors.
+   * 是否为严格相等比较，即匹配所有属性（包括 symbol 和不可枚举属性），
+   * 并要求描述符结构相同。
    */
   strict?: boolean;
 }
@@ -172,7 +157,7 @@ const { getOwnPropertyNames, getOwnPropertySymbols } = Object;
 const { hasOwnProperty } = Object.prototype;
 
 /**
- * Combine two comparators into a single comparators.
+ * 将两个比较器合并为一个。
  */
 function combineComparators<Meta>(
   comparatorA: AnyEqualityComparator<Meta>,
@@ -184,9 +169,8 @@ function combineComparators<Meta>(
 }
 
 /**
- * Wrap the provided `areItemsEqual` method to manage the circular state, allowing
- * for circular references to be safely included in the comparison without creating
- * stack overflows.
+ * 包装传入的 `areItemsEqual` 方法以管理循环状态，
+ * 使循环引用可以安全地参与比较而不会导致栈溢出。
  */
 function createIsCircular<AreItemsEqual extends TypeEqualityComparator<any, any>>(
   areItemsEqual: AreItemsEqual,
@@ -218,8 +202,7 @@ function createIsCircular<AreItemsEqual extends TypeEqualityComparator<any, any>
 }
 
 /**
- * Get the properties to strictly examine, which include both own properties that are
- * not enumerable and symbol properties.
+ * 获取需要严格检查的属性，包括不可枚举的自有属性和 symbol 属性。
  */
 function getStrictProperties(object: Dictionary): Array<string | symbol> {
   return (getOwnPropertyNames(object) as Array<string | symbol>).concat(
@@ -228,7 +211,7 @@ function getStrictProperties(object: Dictionary): Array<string | symbol> {
 }
 
 /**
- * Whether the object contains the property passed as an own property.
+ * 判断对象是否包含指定的自有属性。
  */
 const hasOwn =
   Object.hasOwn ||
@@ -236,7 +219,7 @@ const hasOwn =
     hasOwnProperty.call(object, property));
 
 /**
- * Whether the values passed are strictly equal or both NaN.
+ * 判断传入的值是否严格相等或均为 NaN。
  */
 function sameValueZeroEqual(a: any, b: any): boolean {
   // eslint-disable-next-line no-self-compare
@@ -247,7 +230,7 @@ const OWNER = '_owner';
 
 const { getOwnPropertyDescriptor, keys } = Object;
 /**
- * Whether the arrays are equal in value.
+ * 判断数组是否值相等。
  */
 function areArraysEqualDefault(a: any[], b: any[], state: State<any>) {
   let index = a.length;
@@ -266,14 +249,14 @@ function areArraysEqualDefault(a: any[], b: any[], state: State<any>) {
 }
 
 /**
- * Whether the dates passed are equal in value.
+ * 判断传入的日期是否值相等。
  */
 function areDatesEqualDefault(a: Date, b: Date): boolean {
   return sameValueZeroEqual(a.getTime(), b.getTime());
 }
 
 /**
- * Whether the `Map`s are equal in value.
+ * 判断传入的 `Map` 是否值相等。
  */
 function areMapsEqualDefault(
   a: Map<any, any>,
@@ -333,7 +316,7 @@ function areMapsEqualDefault(
 }
 
 /**
- * Whether the objects are equal in value.
+ * 判断对象是否值相等。
  */
 function areObjectsEqualDefault(
   a: Dictionary,
@@ -350,10 +333,8 @@ function areObjectsEqualDefault(
 
   let property: string;
 
-  // Decrementing `while` showed faster results than either incrementing or
-  // decrementing `for` loop and than an incrementing `while` loop. Declarative
-  // methods like `some` / `every` were not used to avoid incurring the garbage
-  // cost of anonymous callbacks.
+  // 递减 `while` 循环比递增或递减 `for` 循环以及递增 `while` 循环更快。
+  // 未使用 `some` / `every` 等声明式方法，以避免匿名回调的垃圾回收开销。
   while (index-- > 0) {
     property = properties[index]!;
 
@@ -373,7 +354,7 @@ function areObjectsEqualDefault(
 }
 
 /**
- * Whether the objects are equal in value with strict property checking.
+ * 判断对象是否值相等（严格属性检查模式）。
  */
 function areObjectsEqualStrictDefault(
   a: Dictionary,
@@ -392,10 +373,8 @@ function areObjectsEqualStrictDefault(
   let descriptorA: ReturnType<typeof getOwnPropertyDescriptor>;
   let descriptorB: ReturnType<typeof getOwnPropertyDescriptor>;
 
-  // Decrementing `while` showed faster results than either incrementing or
-  // decrementing `for` loop and than an incrementing `while` loop. Declarative
-  // methods like `some` / `every` were not used to avoid incurring the garbage
-  // cost of anonymous callbacks.
+  // 递减 `while` 循环比递增或递减 `for` 循环以及递增 `while` 循环更快。
+  // 未使用 `some` / `every` 等声明式方法，以避免匿名回调的垃圾回收开销。
   while (index-- > 0) {
     property = properties[index]!;
 
@@ -430,7 +409,7 @@ function areObjectsEqualStrictDefault(
 }
 
 /**
- * Whether the primitive wrappers passed are equal in value.
+ * 判断传入的原始类型包装对象是否值相等。
  */
 function arePrimitiveWrappersEqualDefault(
   a: PrimitiveWrapper,
@@ -440,14 +419,14 @@ function arePrimitiveWrappersEqualDefault(
 }
 
 /**
- * Whether the regexps passed are equal in value.
+ * 判断传入的正则表达式是否值相等。
  */
 function areRegExpsEqualDefault(a: RegExp, b: RegExp): boolean {
   return a.source === b.source && a.flags === b.flags;
 }
 
 /**
- * Whether the `Set`s are equal in value.
+ * 判断传入的 `Set` 是否值相等。
  */
 function areSetsEqualDefault(a: Set<any>, b: Set<any>, state: State<any>): boolean {
   if (a.size !== b.size) {
@@ -503,7 +482,7 @@ function areSetsEqualDefault(a: Set<any>, b: Set<any>, state: State<any>): boole
 }
 
 /**
- * Whether the TypedArray instances are equal in value.
+ * 判断 TypedArray 实例是否值相等。
  */
 function areTypedArraysEqual(a: TypedArray, b: TypedArray) {
   let index = a.length;
@@ -548,7 +527,7 @@ interface CreateIsEqualOptions<Meta> {
 }
 
 /**
- * Create a comparator method based on the type-specific equality comparators passed.
+ * 根据传入的类型特定相等比较器创建比较方法。
  */
 function createEqualityComparator<Meta>({
   areArraysEqual,
@@ -561,63 +540,54 @@ function createEqualityComparator<Meta>({
   areTypedArraysEqual,
 }: ComparatorConfig<Meta>): EqualityComparator<Meta> {
   /**
-   * compare the value of the two objects and return true if they are equivalent in values
+   * 比较两个对象的值，如果它们在值上等价则返回 true
    */
   return function comparator(a: any, b: any, state: State<Meta>): boolean {
-    // If the items are strictly equal, no need to do a value comparison.
+    // 如果两个值严格相等，则无需进行值比较。
     if (a === b) {
       return true;
     }
 
-    // If the items are not non-nullish objects, then the only possibility
-    // of them being equal but not strictly is if they are both `NaN`. Since
-    // `NaN` is uniquely not equal to itself, we can use self-comparison of
-    // both objects, which is faster than `isNaN()`.
+    // 如果值不是非空对象，则它们相等但不严格相等的唯一可能是两者都是 `NaN`。
+    // 由于 `NaN` 具有不等于自身的特性，可以使用自比较来判断，这比 `isNaN()` 更快。
     if (a == null || b == null || typeof a !== 'object' || typeof b !== 'object') {
       return a !== a && b !== b;
     }
 
     const constructor = a.constructor;
 
-    // Checks are listed in order of commonality of use-case:
-    //   1. Common complex object types (plain object, array)
-    //   2. Common data values (date, regexp)
-    //   3. Less-common complex object types (map, set)
-    //   4. Less-common data values (promise, primitive wrappers)
-    // Inherently this is both subjective and assumptive, however
-    // when reviewing comparable libraries in the wild this order
-    // appears to be generally consistent.
+    // 检查顺序按使用场景的常见程度排列：
+    //   1. 常见复杂对象类型（普通对象、数组）
+    //   2. 常见数据值（日期、正则表达式）
+    //   3. 较少见的复杂对象类型（Map、Set）
+    //   4. 较少见的数据值（Promise、原始类型包装对象）
+    // 这个顺序虽然是主观且带有假设性的，但参考了同类库的做法，
+    // 整体上是一致的。
 
-    // Constructors should match, otherwise there is potential for false positives
-    // between class and subclass or custom object and POJO.
+    // 构造函数必须匹配，否则类与子类之间或自定义对象与普通对象之间可能产生误判。
     if (constructor !== b.constructor) {
       return false;
     }
 
-    // `isPlainObject` only checks against the object's own realm. Cross-realm
-    // comparisons are rare, and will be handled in the ultimate fallback, so
-    // we can avoid capturing the string tag.
+    // `isPlainObject` 仅检查对象所属的域。跨域比较很少见，将在最终回退中处理，
+    // 因此这里可以避免获取字符串标签。
     if (constructor === Object) {
       return areObjectsEqual(a, b, state);
     }
 
-    // `isArray()` works on subclasses and is cross-realm, so we can avoid capturing
-    // the string tag or doing an `instanceof` check.
+    // `isArray()` 对子类也有效且支持跨域，因此可以避免获取字符串标签或使用 `instanceof` 检查。
     if (isArray(a)) {
       return areArraysEqual(a, b, state);
     }
 
-    // `isTypedArray()` works on all possible TypedArray classes, so we can avoid
-    // capturing the string tag or comparing against all possible constructors.
+    // `isTypedArray()` 适用于所有 TypedArray 类，因此可以避免获取字符串标签或逐一比较构造函数。
     if (isTypedArray != null && isTypedArray(a)) {
       return areTypedArraysEqual(a, b, state);
     }
 
-    // Try to fast-path equality checks for other complex object types in the
-    // same realm to avoid capturing the string tag. Strict equality is used
-    // instead of `instanceof` because it is more performant for the common
-    // use-case. If someone is subclassing a native class, it will be handled
-    // with the string tag comparison.
+    // 尝试对同域的其他复杂对象类型进行快速路径相等检查，以避免获取字符串标签。
+    // 使用严格相等代替 `instanceof`，因为在常见场景下性能更好。
+    // 如果有人继承了原生类，将在后续的字符串标签比较中处理。
 
     if (constructor === Date) {
       return areDatesEqual(a, b, state);
@@ -635,8 +605,8 @@ function createEqualityComparator<Meta>({
       return areSetsEqual(a, b, state);
     }
 
-    // Since this is a custom object, capture the string tag to determing its type.
-    // This is reasonably performant in modern environments like v8 and SpiderMonkey.
+    // 由于这是自定义对象，获取字符串标签以确定其类型。
+    // 在 v8 和 SpiderMonkey 等现代环境中，这具有较好的性能。
     const tag = getTag(a);
 
     if (tag === DATE_TAG) {
@@ -656,9 +626,8 @@ function createEqualityComparator<Meta>({
     }
 
     if (tag === OBJECT_TAG) {
-      // The exception for value comparison is custom `Promise`-like class instances. These should
-      // be treated the same as standard `Promise` objects, which means strict equality, and if
-      // it reaches this point then that strict equality comparison has already failed.
+      // 值比较的例外是自定义的类 `Promise` 实例。这些应与标准 `Promise` 对象一样处理，
+      // 即使用严格相等。如果执行到此处，说明严格相等比较已经失败。
       return (
         typeof a.then !== 'function' &&
         typeof b.then !== 'function' &&
@@ -666,35 +635,31 @@ function createEqualityComparator<Meta>({
       );
     }
 
-    // If an arguments tag, it should be treated as a standard object.
+    // 如果是 arguments 标签，应将其视为普通对象处理。
     if (tag === ARGUMENTS_TAG) {
       return areObjectsEqual(a, b, state);
     }
 
-    // As the penultimate fallback, check if the values passed are primitive wrappers. This
-    // is very rare in modern JS, which is why it is deprioritized compared to all other object
-    // types.
+    // 作为倒数第二的回退，检查传入的值是否为原始类型包装对象。
+    // 这在现代 JS 中非常少见，因此优先级低于其他所有对象类型。
     if (tag === BOOLEAN_TAG || tag === NUMBER_TAG || tag === STRING_TAG) {
       return arePrimitiveWrappersEqual(a, b, state);
     }
 
-    // If not matching any tags that require a specific type of comparison, then we hard-code false because
-    // the only thing remaining is strict equality, which has already been compared. This is for a few reasons:
-    //   - Certain types that cannot be introspected (e.g., `WeakMap`). For these types, this is the only
-    //     comparison that can be made.
-    //   - For types that can be introspected, but rarely have requirements to be compared
-    //     (`ArrayBuffer`, `DataView`, etc.), the cost is avoided to prioritize the common
-    //     use-cases (may be included in a future release, if requested enough).
-    //   - For types that can be introspected but do not have an objective definition of what
-    //     equality is (`Error`, etc.), the subjective decision is to be conservative and strictly compare.
-    // In all cases, these decisions should be reevaluated based on changes to the language and
-    // common development practices.
+    // 如果不匹配任何需要特定比较类型的标签，则硬编码返回 false，
+    // 因为剩下的只有严格相等比较，而它已经在前面完成。原因如下：
+    //   - 某些类型无法内省（如 `WeakMap`），对于这些类型，这是唯一能做的比较。
+    //   - 对于可以内省但很少需要比较的类型（`ArrayBuffer`、`DataView` 等），
+    //     避免额外开销以优先保证常见场景的性能（如有足够需求，可能会在未来版本中支持）。
+    //   - 对于可以内省但相等性没有客观定义的类型（`Error` 等），
+    //     采取保守策略，使用严格比较。
+    // 在所有情况下，这些决策应根据语言变化和常见开发实践重新评估。
     return false;
   };
 }
 
 /**
- * Create the configuration object used for building comparators.
+ * 创建用于构建比较器的配置对象。
  */
 function createEqualityComparatorConfig<Meta>({
   circular,
@@ -738,8 +703,7 @@ function createEqualityComparatorConfig<Meta>({
 }
 
 /**
- * Default equality comparator pass-through, used as the standard `isEqual` creator for
- * use inside the built comparator.
+ * 默认相等比较器的透传，作为标准 `isEqual` 创建器供构建好的比较器内部使用。
  */
 function createInternalEqualityComparator<Meta>(
   compare: EqualityComparator<Meta>,
@@ -758,7 +722,7 @@ function createInternalEqualityComparator<Meta>(
 }
 
 /**
- * Create the `isEqual` function used by the consuming application.
+ * 创建供消费方应用使用的 `isEqual` 函数。
  */
 function createIsEqual<Meta>({ comparator, equals, strict }: CreateIsEqualOptions<Meta>) {
   const state = {
@@ -774,7 +738,7 @@ function createIsEqual<Meta>({ comparator, equals, strict }: CreateIsEqualOption
 }
 
 /**
- * Whether the items passed are deeply-equal in value.
+ * 判断传入的值是否深度相等。
  */
 //  const deepEqual = createCustomEqual();
 

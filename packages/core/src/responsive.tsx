@@ -93,17 +93,17 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 	}, [layouts, breakpoints, compactType, state]);
 
 	const onInnerWidthChange = useCallback(
-		// breakpoints or cols changed
+		// 断点或列数变化时
 		(changed: boolean) => {
 			if (state.breakpoint !== nextBreakpoint || changed) {
-				// Preserve the current layout if the current breakpoint is not present in the next layouts.
+				// 如果当前断点不在新的 layouts 中，保留当前布局
 				if (!(state.breakpoint in layouts)) {
 					innerLayouts.current = {
 						...innerLayouts.current,
 						[state.breakpoint]: cloneLayout(innerLayout),
 					};
 				}
-				// Find or generate a new layout.
+				// 查找或生成新布局
 				let nextLayout = findOrGenerateResponsiveLayout(
 					{ ...innerLayouts.current },
 					breakpoints,
@@ -112,7 +112,7 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 					nextCols,
 					compactType,
 				);
-				// This adds missing items.
+				// 添加缺失的项
 				nextLayout = synchronizeLayoutWithChildren(
 					nextLayout,
 					children,
@@ -180,7 +180,7 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 			cols,
 		};
 	}, [width, breakpoint, breakpoints, cols, onInnerWidthChange]);
-	// Handler for layout change
+	// 布局变化处理函数
 	const onInnerLayoutChange = useCallback(
 		(layout: Layout) => {
 			if (typeof onLayoutChange === 'function') {
