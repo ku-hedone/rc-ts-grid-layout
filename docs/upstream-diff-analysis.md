@@ -323,11 +323,11 @@ const paddingX =
 - [x] 删除 `utils.ts` 中的 console.log (2026-06-26)
 - [x] 统一 CompactType 值为 null (2026-06-26)
 
-### 阶段二: 核心功能 (P1)
-- [ ] 新增 `constraints.ts` 约束系统
-- [ ] 新增 `compactors.ts` 压缩策略
-- [ ] 在 `calculate.ts` 中补充 `calcXYRaw`/`calcWHRaw`
-- [ ] 修复 `resolveCompactionCollision` 的 hasStatics 优化
+### 阶段二: 核心功能 (P1) ✅ 已完成
+- [x] 新增 `constraints.ts` 约束系统 (2026-06-26)
+- [x] 新增 `compactors.ts` 压缩策略 (2026-06-26)
+- [x] 在 `calculate.ts` 中补充 `calcXYRaw`/`calcWHRaw` (2026-06-26)
+- [x] 修复 `resolveCompactionCollision` 的 hasStatics 优化 (2026-06-26)
 
 ### 阶段三: 架构优化 (P2)
 - [ ] 新增 `position.ts` 位置策略
