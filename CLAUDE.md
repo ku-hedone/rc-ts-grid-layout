@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目
 
-rc-ts-grid-layout: 基于 react-grid-layout v1 (JS 版本) 重构为 TypeScript 函数组件实现。移除 class 组件，使用 hooks 重构，保留 v1 API 兼容性。
+rc-ts-grid-layout: 基于 react-grid-layout **v1 (JS + Flow)** 版本进行整理、修复 bug 后，重构为 TypeScript 函数组件实现。
 
-上游 react-grid-layout v2 (TS 版本) 是在本项目之后发布的，`git-repo/react-grid-layout/` 目录中包含了 v2 的参考实现，可用于学习和借鉴其可组合接口设计（Compactor、PositionStrategy、LayoutConstraint）。
+**重要说明：**
+- 本项目的基准是 react-grid-layout v1 (JS + Flow)，不是 v2
+- v1 经过整理和 bug 修复后，形成了本项目的基础架构
+- 后续参考了 react-grid-layout v2 (TS 版本) 的可组合接口设计（Compactor、PositionStrategy、LayoutConstraint）
+- 由于基准不同，本项目与 v2 存在较大差异
 
 ## 技术栈
 
@@ -18,7 +22,7 @@ rc-ts-grid-layout: 基于 react-grid-layout v1 (JS 版本) 重构为 TypeScript 
 
 ## 原则
 
-基于 react-grid-layout v1 JS 版本重构为 TypeScript。参考 `git-repo/react-grid-layout/` (v2) 中的可组合接口设计，但保持 v1 API 的向后兼容性。
+基于 react-grid-layout v1 (JS + Flow) 整理修复后重构为 TypeScript。后续参考 `git-repo/react-grid-layout/` (v2) 的可组合接口设计，但保持 v1 的核心架构和 API 兼容性。
 
 ## 命令
 
@@ -179,10 +183,11 @@ GridItem 渲染每个元素并处理交互
 
 `git-repo/react-grid-layout/` 是 react-grid-layout v2 (TS 版本) 的本地副本（只读参考）。
 
-- **本项目**: 基于 react-grid-layout v1 (JS 版本) 重构为 TypeScript
-- **上游 v2**: 在本项目之后发布，采用了可组合接口设计（Compactor、PositionStrategy、LayoutConstraint）
+- **本项目基准**: react-grid-layout v1 (JS + Flow)，经过整理和 bug 修复
+- **上游 v2**: 在本项目之后发布，采用了全新的可组合接口设计
+- **差异较大**: 由于基准不同（v1 vs v2），两个项目存在较大架构差异
+- 已从 v2 借鉴了部分可组合接口设计（约束系统、压缩策略、位置策略）
 - 详细差异分析见 `docs/upstream-diff-analysis.md`
-- 已从 v2 借鉴了约束系统、压缩策略、位置策略等可组合接口设计
 
 ## 规则
 

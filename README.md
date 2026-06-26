@@ -1,6 +1,18 @@
 # rc-ts-grid-layout
 
-基于 [react-grid-layout](https://github.com/react-grid-layout/react-grid-layout) v1 (JS 版本) 重构为 TypeScript 函数组件实现。
+基于 [react-grid-layout](https://github.com/react-grid-layout/react-grid-layout) **v1 (JS + Flow)** 版本进行整理、修复 bug 后，重构为 TypeScript 函数组件实现。
+
+## 背景
+
+本项目起源于对 react-grid-layout v1 的整理和 bug 修复，随后重构为 TypeScript + 函数组件。后续参考了 react-grid-layout v2 的可组合接口设计，但核心架构仍基于 v1。
+
+| 项目 | 基准 | 说明 |
+|------|------|------|
+| react-grid-layout v1 | JS + Flow | 原始版本，使用 class 组件 |
+| **rc-ts-grid-layout** | v1 整理修复 | **本项目**，重构为 TypeScript + 函数组件 |
+| react-grid-layout v2 | TypeScript | 后续版本，采用全新可组合接口设计 |
+
+**注意**: 由于基准不同（v1 vs v2），本项目与 react-grid-layout v2 存在较大架构差异。
 
 ## 特性
 
@@ -42,16 +54,6 @@ function App() {
   );
 }
 ```
-
-## 与上游库的关系
-
-| 项目 | 基础 | 说明 |
-|------|------|------|
-| react-grid-layout v1 | JS 版本 | 原始版本，使用 class 组件 |
-| **rc-ts-grid-layout** | v1 JS 版本 | **本项目**，重构为 TypeScript + 函数组件 |
-| react-grid-layout v2 | TS 版本 | 在本项目之后发布，采用可组合接口设计 |
-
-本项目参考了 v2 的可组合接口设计（Compactor、PositionStrategy、LayoutConstraint），但保持 v1 API 的向后兼容性。
 
 ## 开发
 
