@@ -260,12 +260,19 @@ export function compact(
 const heightWidth = { x: 'w', y: 'h' } as const;
 /**
  * 在向下移动元素之前，检查移动是否会导致碰撞，并先移动那些元素。
+ *
+ * @param layout - 完整布局（必须已排序以优化）
+ * @param item - 被移动的项（会被修改）
+ * @param moveToCoord - 目标坐标
+ * @param axis - 移动的轴（'x' 或 'y'）
+ * @param hasStatics - 布局是否包含静态项（禁用提前退出优化）
  */
 function resolveCompactionCollision(
 	layout: Layout,
 	item: LayoutItem,
 	moveToCoord: number,
 	axis: 'x' | 'y',
+	hasStatics?: boolean,
 ) {
 	const sizeProp = heightWidth[axis];
 	item[axis] += 1;
@@ -275,6 +282,9 @@ function resolveCompactionCollision(
 		})
 		.indexOf(item.i);
 
+	// 如果未提供 hasStatics，则计算一次（向后兼容）
+	const layoutHasStatics = hasStatics ?? getStatics(layout).length > 0;
+
 	// 遍历与之碰撞的每个元素。
 	for (let i = itemIndex + 1; i < layout.length; i++) {
 		const otherItem = layout[i];
@@ -282,12 +292,12 @@ function resolveCompactionCollision(
 			// 忽略静态元素
 			if (otherItem.static) continue;
 
-			// 优化：如果已知超过该元素可以提前退出
-			// 因为布局已排序，所以可以这样做
-			if (otherItem.y > item.y + item.h) break;
+			// 优化：仅在没有静态项时才提前退出。
+			// 静态项可能散布在布局中，因此不能假设排序顺序保证没有更多碰撞。
+			if (!layoutHasStatics && otherItem.y > item.y + item.h) break;
 
 			if (collides(item, otherItem)) {
-				resolveCompactionCollision(layout, otherItem, moveToCoord + item[sizeProp], axis);
+				resolveCompactionCollision(layout, otherItem, moveToCoord + item[sizeProp], axis, layoutHasStatics);
 			}
 		}
 	}

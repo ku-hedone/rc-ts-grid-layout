@@ -98,6 +98,64 @@ export function calcWH(
 	return { w: _w, h: _h };
 }
 
+/**
+ * 将像素坐标转换为网格单位，不做边界限制。
+ *
+ * 与约束系统配合使用，用于自定义边界控制。
+ *
+ * @param positionParams - 网格参数
+ * @param top - 相对于父元素的顶部位置（像素）
+ * @param left - 相对于父元素的左侧位置（像素）
+ * @returns 网格单位的 x 和 y（未限制）
+ */
+export function calcXYRaw(
+	positionParams: PositionParams,
+	top: number,
+	left: number,
+): { x: number; y: number } {
+	const { margin, containerPadding, rowHeight } = positionParams;
+	const paddingX =
+		Array.isArray(containerPadding) && containerPadding.length
+			? containerPadding[0]
+			: margin[0];
+	const paddingY =
+		Array.isArray(containerPadding) && containerPadding.length
+			? containerPadding[1]
+			: margin[1];
+	const colWidth = calcGridColWidth(positionParams);
+
+	const x = Math.round((left - paddingX) / (colWidth + margin[0]));
+	const y = Math.round((top - paddingY) / (rowHeight + margin[1]));
+
+	return { x, y };
+}
+
+/**
+ * 根据像素尺寸计算网格单位，不做边界限制。
+ *
+ * 与约束系统配合使用，用于自定义尺寸控制。
+ *
+ * @param positionParams - 网格参数
+ * @param width - 像素宽度
+ * @param height - 像素高度
+ * @returns 网格单位的 w 和 h（未限制，最小为 1）
+ */
+export function calcWHRaw(
+	positionParams: PositionParams,
+	width: number,
+	height: number,
+): { w: number; h: number } {
+	const { margin, rowHeight } = positionParams;
+	const colWidth = calcGridColWidth(positionParams);
+
+	// width = colWidth * w - (margin * (w - 1))
+	// w = (width + margin) / (colWidth + margin)
+	const w = Math.max(1, Math.round((width + margin[0]) / (colWidth + margin[0])));
+	const h = Math.max(1, Math.round((height + margin[1]) / (rowHeight + margin[1])));
+
+	return { w, h };
+}
+
 // 类似 _.clamp 的数值限制函数
 export function clamp(num: number, lowerBound: number, upperBound: number): number {
 	return Math.max(Math.min(num, upperBound), lowerBound);

@@ -4,3 +4,6 @@ export { default as ResponsiveGridLayout } from './responsive';
 export { default as GridLayout } from './grid';
 
 export * from './utils';
+export * from './constraints';
+export * from './compactors';
+export type * from './type';
