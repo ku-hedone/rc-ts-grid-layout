@@ -40,7 +40,7 @@ export default {
     },
     source: {
       enabled: true,
-      defaultState: true,
+      defaultState: false,
     },
     theme: {
       enabled: true,
