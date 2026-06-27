@@ -18,9 +18,12 @@
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
 		"fmt": "oxfmt",
-		"fmt:check": "oxfmt --check"
+		"fmt:check": "oxfmt --check",
+		"ladle": "ladle serve",
+		"ladle:build": "ladle build"
 	},
 	"devDependencies": {
+		"@ladle/react": "^4.0.0",
 		"@types/lodash": "^4.14.202",
 		"@types/node": "^20.10.6",
 		"@types/react": ">=18.x.x",

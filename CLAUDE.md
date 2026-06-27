@@ -109,6 +109,26 @@ cd packages/core && pnpm run test:coverage
 open packages/core/coverage/index.html
 ```
 
+## 组件文档（Ladle）
+
+```bash
+# 启动 Ladle 文档服务器
+pnpm run ladle
+
+# 构建静态文档
+pnpm run ladle:build
+```
+
+故事文件位于 `packages/core/src/stories/` 目录：
+- `Basic.stories.tsx` - 基础用法
+- `Draggable.stories.tsx` - 拖拽功能
+- `Resizable.stories.tsx` - 缩放功能
+- `Responsive.stories.tsx` - 响应式布局
+- `Static.stories.tsx` - 静态项
+- `Overlap.stories.tsx` - 重叠模式
+- `Dropping.stories.tsx` - 拖放功能
+- `CustomStyle.stories.tsx` - 自定义样式
+
 ## Monorepo
 
 | 包 | 职责 |
