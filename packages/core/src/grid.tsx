@@ -10,8 +10,8 @@ import {
 } from 'react';
 import {
 	bottom,
+	childrenEqual,
 	cloneLayoutItem,
-	compact,
 	fastRGLPropsEqual,
 	compactType as genCompactType,
 	getAllCollisions,
@@ -21,6 +21,7 @@ import {
 	synchronizeLayoutWithChildren,
 	withLayoutItem,
 } from './utils';
+import { getCompactor } from './compactors';
 import GridItem from './item';
 import { deepEqual } from './equals';
 import { calcXY } from './calculate';
@@ -102,15 +103,19 @@ const GridLayout: FC<RGLProps> = memo(
 		attributes = {},
 		wrapperProps,
 	}) => {
-		const lastLayout = useRef<Layout>(layout);
 		/**
-		 * 上一个布局项
+		 * 上一个布局项（拖拽/缩放开始时保存）
 		 */
 		const old = useRef<LayoutItem | undefined>(undefined);
 		const droppingDOM = useRef<ReactElement | undefined>(undefined);
 		const lastRect = useRef<Rect | undefined>(undefined);
 		const resizing = useRef(false);
 		const dragEnterCount = useRef(0);
+
+		// 显式追踪上一轮 props，避免 render-phase ref mutation
+		const prevLayoutRef = useRef<Layout>(layout);
+		const prevChildrenRef = useRef<ReactNode>(children);
+		const prevCompactTypeRef = useRef<CompactType>(undefined);
 		// 最终紧凑类型
 		// 兼容 verticalCompact: false 的旧用法
 		const innerCompactType = useMemo(
@@ -120,6 +125,12 @@ const GridLayout: FC<RGLProps> = memo(
 					verticalCompact,
 				}),
 			[compactType, verticalCompact],
+		);
+
+		// 将 compactType + allowOverlap + preventCollision 收敛到 Compactor 策略
+		const innerCompactor = useMemo(
+			() => getCompactor(innerCompactType, allowOverlap, preventCollision),
+			[innerCompactType, allowOverlap, preventCollision],
 		);
 
 		const latestLayout = useMemo(
@@ -142,12 +153,13 @@ const GridLayout: FC<RGLProps> = memo(
 			compactType: innerCompactType,
 		});
 
-		lastLayout.current = layout;
-
-		innerPropsRef.current = {
-			layout: innerLayout,
-			compactType: innerCompactType,
-		};
+		// 用 useLayoutEffect 更新 ref，避免 render-phase mutation 在 StrictMode 下出错
+		useLayoutEffect(() => {
+			innerPropsRef.current = {
+				layout: innerLayout,
+				compactType: innerCompactType,
+			};
+		});
 
 		const [rect, setRect] = useState<Rect>();
 		const [mounted, setMounted] = useState(false);
@@ -220,11 +232,9 @@ const GridLayout: FC<RGLProps> = memo(
 		// 当 layout 或 children 更新时
 		// 移除占位元素
 		const removeDroppingPlaceholder = useCallback(() => {
-			const nextLayout = compact(
+			const nextLayout = innerCompactor.compact(
 				innerLayout.filter((l) => l.i !== droppingItem.i),
-				innerCompactType,
 				cols,
-				allowOverlap,
 			);
 			droppingDOM.current = void 0;
 			old.current = void 0;
@@ -232,7 +242,7 @@ const GridLayout: FC<RGLProps> = memo(
 				setDroppingPosition(void 0);
 				setInnerLayout(nextLayout);
 			});
-		}, [allowOverlap, cols, droppingItem.i, innerCompactType, innerLayout]);
+		}, [cols, droppingItem.i, innerCompactor, innerLayout]);
 
 		const preventBrowserNativeAction = useCallback((e: DragNativeEvent) => {
 			// 阻止浏览器默认行为
@@ -425,9 +435,7 @@ const GridLayout: FC<RGLProps> = memo(
 						cols,
 						allowOverlap,
 					);
-					const nextInnerLayout = allowOverlap
-						? currentLayout
-						: compact(currentLayout, innerPropsRef.current.compactType, cols);
+					const nextInnerLayout = innerCompactor.compact(currentLayout, cols);
 					flushSync(() => {
 						if (!deepEqual(nextRect, lastRect.current)) {
 							setRect(nextRect);
@@ -445,7 +453,7 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[preventCollision, cols, allowOverlap, onDrag],
+			[preventCollision, cols, allowOverlap, innerCompactor, onDrag],
 		);
 		const onInnerDragStop: Required<ItemProps>['onDragStop'] = useCallback(
 			(i, x, y, { e, node }) => {
@@ -467,9 +475,7 @@ const GridLayout: FC<RGLProps> = memo(
 							cols,
 							allowOverlap,
 						);
-						const nextLayout = allowOverlap
-							? currentLayout
-							: compact(currentLayout, innerPropsRef.current.compactType, cols);
+						const nextLayout = innerCompactor.compact(currentLayout, cols);
 						old.current = void 0;
 						lastRect.current = void 0;
 						flushSync(() => {
@@ -486,7 +492,7 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[allowOverlap, cols, onDragStop, preventCollision],
+			[allowOverlap, cols, innerCompactor, onDragStop, preventCollision],
 		);
 		// 调整大小相关逻辑
 		const onInnerResizeStart: Required<ItemProps>['onResizeStart'] = useCallback(
@@ -593,9 +599,7 @@ const GridLayout: FC<RGLProps> = memo(
 					} else {
 						console.warn('there is no onResize');
 					}
-					const nextInnerLayout = allowOverlap
-						? finalLayout
-						: compact(finalLayout, innerPropsRef.current.compactType, cols);
+					const nextInnerLayout = innerCompactor.compact(finalLayout, cols);
 					flushSync(() => {
 						// 重新紧凑排列布局并设置拖拽占位元素。
 						if (!deepEqual(lastRect.current, placeholder)) {
@@ -608,18 +612,15 @@ const GridLayout: FC<RGLProps> = memo(
 					});
 				}
 			},
-			[allowOverlap, cols, onResize, preventCollision],
+			[allowOverlap, cols, innerCompactor, onResize, preventCollision],
 		);
 		const onInnerResizeStop: Required<ItemProps>['onResizeStop'] = useCallback(
 			(i, _w, _h, { e, node }) => {
 				const item = getLayoutItem(innerPropsRef.current.layout, i);
-				const nextLayout = allowOverlap
-					? innerPropsRef.current.layout
-					: compact(
-							innerPropsRef.current.layout,
-							innerPropsRef.current.compactType,
-							cols,
-						);
+				const nextLayout = innerCompactor.compact(
+					innerPropsRef.current.layout,
+					cols,
+				);
 				const previousItem = old.current;
 				lastRect.current = void 0;
 				old.current = void 0;
@@ -636,7 +637,7 @@ const GridLayout: FC<RGLProps> = memo(
 					console.warn('there is no onResizeStop');
 				}
 			},
-			[allowOverlap, cols, onResizeStop],
+			[cols, innerCompactor, onResizeStop],
 		);
 
 		const genGridItem = useCallback(
@@ -748,29 +749,55 @@ const GridLayout: FC<RGLProps> = memo(
 			[className],
 		);
 
-		useEffect(() => {
-			// 非拖拽或调整大小状态下
-			if (!lastRect.current) {
-				setInnerLayout(latestLayout);
-			}
-		}, [latestLayout]);
-
-		// 初始化布局
+		// useLayoutEffect: 在 DOM 更新后、浏览器绘制前同步 ref
+		// 确保 prevLayoutRef 在下一个 effect 读取时已更新
 		useLayoutEffect(() => {
 			if (!mounted) {
 				setMounted(true);
 			}
-		}, [mounted]);
-
-		useEffect(() => {
-			// const previousLayout = lastLayout.current;
-			if (mounted) {
-				// 挂载后可能需要回调 layout 变更。
-				// 应在修正布局宽度之后执行，
-				// 以确保不会以错误的宽度重新渲染。
-				onLayoutMaybeChanged(innerLayout, lastLayout.current);
+			// 初始化 prevCompactTypeRef（首次渲染后）
+			if (prevCompactTypeRef.current === undefined) {
+				prevCompactTypeRef.current = innerCompactType;
 			}
-		}, [innerLayout, mounted, onLayoutMaybeChanged]);
+		});
+
+		// 合并的 layout 同步 effect
+		// 1. props layout/children 变化时同步到 innerLayout
+		// 2. 拖拽/缩放活跃期间不覆盖内部状态
+		// 3. 比较覆盖完整 LayoutItem 字段（通过 deepEqual）
+		useEffect(() => {
+			// 拖拽/缩放活跃期间不覆盖内部状态
+			// 必须在更新 prev refs 之前检查，否则 props 变化会被标记为"已处理"而永久跳过
+			if (lastRect.current) return;
+
+			const layoutChanged = !deepEqual(prevLayoutRef.current, layout);
+			const childrenChanged = !childrenEqual(prevChildrenRef.current, children);
+			const compactTypeChanged = prevCompactTypeRef.current !== innerCompactType;
+
+			// 更新 prev refs（在比较之后、同步之前）
+			prevLayoutRef.current = layout;
+			prevChildrenRef.current = children;
+			prevCompactTypeRef.current = innerCompactType;
+
+			// props layout 或 children 或 compactType 变化时，重新同步
+			if (layoutChanged || childrenChanged || compactTypeChanged) {
+				const synced = synchronizeLayoutWithChildren(
+					layout,
+					children,
+					cols,
+					innerCompactType,
+					allowOverlap,
+				);
+				setInnerLayout(synced);
+				if (mounted) {
+					onLayoutMaybeChanged(synced, layout);
+				}
+			} else if (mounted) {
+				// layout 未从 props 变化，但 innerLayout 可能被拖拽修改
+				// 通知父级布局变更（如拖拽结束后）
+				onLayoutMaybeChanged(innerLayout, layout);
+			}
+		});
 
 		return (
 			<div

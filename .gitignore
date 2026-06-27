@@ -4,3 +4,5 @@ esm
 typings
 coverage
 git-repo
+playwright-report
+test-results
