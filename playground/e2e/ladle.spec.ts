@@ -181,7 +181,54 @@ test.describe('Ladle - Basic Story', () => {
 });
 
 test.describe('Ladle - Dropping Story', () => {
-	test('drop 成功：外部元素拖入网格后 layout 更新', async ({ page }) => {
+	/**
+	 * 在浏览器侧创建真实 DataTransfer 并触发 dragstart → dragover → drop 序列。
+	 * Playwright 的 dispatchEvent 无法序列化函数，必须在 page.evaluate 内构造。
+	 */
+	async function performDrop(
+		page: import('@playwright/test').Page,
+		draggableSelector: string,
+		gridSelector: string,
+	) {
+		await page.evaluate(
+			({ dragSel, gridSel }) => {
+				const draggable = document.querySelector(dragSel);
+				const grid = document.querySelector(gridSel);
+				if (!draggable || !grid) return;
+
+				const gridRect = grid.getBoundingClientRect();
+				const centerX = gridRect.left + gridRect.width / 2;
+				const centerY = gridRect.top + gridRect.height / 2;
+
+				// 创建真实 DataTransfer
+				const dt = new DataTransfer();
+				dt.setData('text/plain', 'item-b');
+
+				draggable.dispatchEvent(
+					new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }),
+				);
+				grid.dispatchEvent(
+					new DragEvent('dragover', {
+						bubbles: true,
+						clientX: centerX,
+						clientY: centerY,
+						dataTransfer: dt,
+					}),
+				);
+				grid.dispatchEvent(
+					new DragEvent('drop', {
+						bubbles: true,
+						clientX: centerX,
+						clientY: centerY,
+						dataTransfer: dt,
+					}),
+				);
+			},
+			{ dragSel: draggableSelector, gridSel: gridSelector },
+		);
+	}
+
+	test('drop 成功：外部元素拖入网格后 item 数量增加', async ({ page }) => {
 		const errors: string[] = [];
 		page.on('console', (msg) => {
 			if (msg.type() === 'error' && isProjectError(msg.text())) {
@@ -192,56 +239,24 @@ test.describe('Ladle - Dropping Story', () => {
 		await page.goto(`${LADLE_BASE}/?story=dropping--basic-dropping`);
 		await page.waitForLoadState('networkidle');
 
-		// 网格容器可见
 		const grid = page.locator('.react-grid-layout').first();
 		await expect(grid).toBeVisible();
 
-		// 记录初始 item 数量
 		const initialCount = await page.locator('.react-grid-item').count();
 
-		// 找到可拖拽的外部元素
-		const draggable = page.locator('[draggable="true"]').first();
-		await expect(draggable).toBeVisible();
+		// 执行真实 drag and drop
+		await performDrop(page, '[draggable="true"]', '.react-grid-layout');
 
-		// 获取网格位置
-		const gridBox = await grid.boundingBox();
-		expect(gridBox).not.toBeNull();
+		await page.waitForTimeout(500);
 
-		if (gridBox) {
-			// 模拟 HTML5 drag and drop
-			const dragBox = await draggable.boundingBox();
-			if (dragBox) {
-				// 触发 dragStart
-				await draggable.dispatchEvent('dragstart', {
-					dataTransfer: { setData: () => {}, effectAllowed: 'move' },
-				});
+		// item 数量严格增加
+		const finalCount = await page.locator('.react-grid-item').count();
+		expect(finalCount).toBeGreaterThan(initialCount);
 
-				// 触发 dragOver 到网格
-				await grid.dispatchEvent('dragover', {
-					clientX: gridBox.x + gridBox.width / 2,
-					clientY: gridBox.y + gridBox.height / 2,
-				});
-
-				// 触发 drop
-				await grid.dispatchEvent('drop', {
-					clientX: gridBox.x + gridBox.width / 2,
-					clientY: gridBox.y + gridBox.height / 2,
-				});
-
-				// 等待 layout 更新
-				await page.waitForTimeout(500);
-
-				// 验证 item 数量增加
-				const finalCount = await page.locator('.react-grid-item').count();
-				expect(finalCount).toBeGreaterThanOrEqual(initialCount);
-			}
-		}
-
-		// 无项目侧 console.error
 		expect(errors).toHaveLength(0);
 	});
 
-	test('drop 后无重复 __dropping-elem__', async ({ page }) => {
+	test('dragover 阶段最多 1 个 dropping item，drop 后为 0', async ({ page }) => {
 		await page.goto(`${LADLE_BASE}/?story=dropping--basic-dropping`);
 		await page.waitForLoadState('networkidle');
 
@@ -249,26 +264,64 @@ test.describe('Ladle - Dropping Story', () => {
 		await expect(grid).toBeVisible();
 
 		const gridBox = await grid.boundingBox();
-		if (gridBox) {
-			const draggable = page.locator('[draggable="true"]').first();
-			await draggable.dispatchEvent('dragstart', {
-				dataTransfer: { setData: () => {}, effectAllowed: 'move' },
-			});
-			await grid.dispatchEvent('dragover', {
-				clientX: gridBox.x + gridBox.width / 2,
-				clientY: gridBox.y + gridBox.height / 2,
-			});
-			await grid.dispatchEvent('drop', {
-				clientX: gridBox.x + gridBox.width / 2,
-				clientY: gridBox.y + gridBox.height / 2,
-			});
-			await page.waitForTimeout(500);
+		expect(gridBox).not.toBeNull();
+		if (!gridBox) return;
 
-			// 不应有重复的 dropping item
-			const droppingItems = page.locator('[data-testid*="dropping"]');
-			const count = await droppingItems.count();
-			expect(count).toBeLessThanOrEqual(1);
-		}
+		const dt = new DataTransfer();
+		dt.setData('text/plain', 'item-b');
+
+		// dragover 阶段：触发 dragstart + dragover（不 drop）
+		await page.evaluate(
+			({ cx, cy }) => {
+				const draggable = document.querySelector('[draggable="true"]');
+				const grid = document.querySelector('.react-grid-layout');
+				if (!draggable || !grid) return;
+				const dt2 = new DataTransfer();
+				dt2.setData('text/plain', 'item-b');
+				draggable.dispatchEvent(
+					new DragEvent('dragstart', { bubbles: true, dataTransfer: dt2 }),
+				);
+				grid.dispatchEvent(
+					new DragEvent('dragover', {
+						bubbles: true,
+						clientX: cx,
+						clientY: cy,
+						dataTransfer: dt2,
+					}),
+				);
+			},
+			{ cx: gridBox.x + gridBox.width / 2, cy: gridBox.y + gridBox.height / 2 },
+		);
+
+		await page.waitForTimeout(300);
+
+		// dragover 阶段：最多 1 个 dropping 类名的 item
+		const droppingDuringDrag = await page.locator('.react-grid-item.dropping').count();
+		expect(droppingDuringDrag).toBeLessThanOrEqual(1);
+
+		// 执行 drop
+		await page.evaluate(
+			({ cx, cy }) => {
+				const grid = document.querySelector('.react-grid-layout');
+				if (!grid) return;
+				const dt3 = new DataTransfer();
+				grid.dispatchEvent(
+					new DragEvent('drop', {
+						bubbles: true,
+						clientX: cx,
+						clientY: cy,
+						dataTransfer: dt3,
+					}),
+				);
+			},
+			{ cx: gridBox.x + gridBox.width / 2, cy: gridBox.y + gridBox.height / 2 },
+		);
+
+		await page.waitForTimeout(500);
+
+		// drop 后：不应有 dropping 类名的 item
+		const droppingAfterDrop = await page.locator('.react-grid-item.dropping').count();
+		expect(droppingAfterDrop).toBe(0);
 	});
 
 	test('无项目侧 console.error（dropping story）', async ({ page }) => {

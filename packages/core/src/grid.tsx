@@ -335,8 +335,8 @@ const GridLayout: FC<RGLProps> = memo(
 								maxRows,
 								rowHeight,
 							});
-							const margin0 = Number(margin[0]) || 10;
-							const margin1 = Number(margin[1]) || 10;
+							const margin0 = margin[0] ?? 10;
+							const margin1 = margin[1] ?? 10;
 							const itemW = calcGridItemWHPx(w, colWidth, margin0);
 							const itemH = calcGridItemWHPx(h, rowHeight, margin1);
 							const centeredX = layerX - itemW / 2;
