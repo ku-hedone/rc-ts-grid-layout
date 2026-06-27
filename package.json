@@ -23,7 +23,7 @@
 		"ladle:build": "ladle build"
 	},
 	"devDependencies": {
-		"@ladle/react": "^4.0.0",
+		"@ladle/react": "^5.1.1",
 		"@types/lodash": "^4.14.202",
 		"@types/node": "^20.10.6",
 		"@types/react": ">=18.x.x",

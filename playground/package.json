@@ -14,7 +14,7 @@
 	"devDependencies": {
 		"@playwright/test": "^1.49.1",
 		"@vitejs/plugin-react-swc": "^4.3.1",
-		"vite": "^6.3.5"
+		"vite": "^8.1.0"
 	},
 	"dependencies": {
 		"@hedone/rc-ts-grid-layout": "workspace:^"
