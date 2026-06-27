@@ -55,7 +55,7 @@ describe('GridLayout - 拖拽回调', () => {
 			expect(onDragStop).toHaveBeenCalled();
 
 			if (onDragStop.mock.calls.length > 0) {
-				const callArgs = onDragStop.mock.calls[0];
+				const callArgs = onDragStop.mock.calls[0] ?? [];
 				const [callbackLayout, oldItem, newItem] = callArgs;
 
 				// oldItem 不应该是 undefined
@@ -111,7 +111,7 @@ describe('GridLayout - 拖拽回调', () => {
 			expect(onResizeStop).toHaveBeenCalled();
 
 			if (onResizeStop.mock.calls.length > 0) {
-				const callArgs = onResizeStop.mock.calls[0];
+				const callArgs = onResizeStop.mock.calls[0] ?? [];
 				const [callbackLayout, oldItem, newItem] = callArgs;
 
 				// oldItem 不应该是 undefined

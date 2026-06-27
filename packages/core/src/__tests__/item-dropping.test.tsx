@@ -29,6 +29,7 @@ describe('GridItem - Dropping 行为', () => {
 				isDroppable={true}
 				onDrop={onDrop}
 				onDropDragOver={onDropDragOver}
+				children={null}
 			/>,
 		);
 
@@ -45,7 +46,7 @@ describe('GridItem - Dropping 行为', () => {
 			// 验证不会在 dragging 不存在时触发拖拽
 			// 当前的 Bug 可能导致 NaN 值
 			if (onDrop.mock.calls.length > 0) {
-				const dropItem = onDrop.mock.calls[0][1];
+				const dropItem = onDrop.mock.calls[0]?.[1];
 				// 验证位置是有效数字
 				expect(dropItem?.x).not.toBeNaN();
 				expect(dropItem?.y).not.toBeNaN();
@@ -67,6 +68,7 @@ describe('GridItem - Dropping 行为', () => {
 				isDroppable={true}
 				onDrop={onDrop}
 				onDropDragOver={onDropDragOver}
+				children={null}
 			/>,
 		);
 

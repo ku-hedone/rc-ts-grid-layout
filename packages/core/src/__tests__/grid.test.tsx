@@ -122,6 +122,85 @@ describe('GridLayout', () => {
 		expect(draggableItem).toHaveClass('react-draggable');
 	});
 
+	it('连续 children 更新时重新同步布局', async () => {
+		const { rerender } = render(
+			<GridLayout
+				width={1200}
+				layout={[{ i: 'a', x: 0, y: 0, w: 2, h: 2 }]}
+				cols={12}
+				rowHeight={30}
+			>
+				<div key="a">Item A</div>
+			</GridLayout>,
+		);
+
+		rerender(
+			<GridLayout
+				width={1200}
+				layout={[
+					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
+					{ i: 'b', x: 2, y: 0, w: 2, h: 2 },
+				]}
+				cols={12}
+				rowHeight={30}
+			>
+				<div key="a">Item A</div>
+				<div key="b">Item B</div>
+			</GridLayout>,
+		);
+
+		rerender(
+			<GridLayout
+				width={1200}
+				layout={[
+					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
+					{ i: 'c', x: 4, y: 0, w: 2, h: 2 },
+				]}
+				cols={12}
+				rowHeight={30}
+			>
+				<div key="a">Item A</div>
+				<div key="c">Item C</div>
+			</GridLayout>,
+		);
+
+		await waitFor(() => expect(screen.getByText('Item C')).toBeInTheDocument());
+		expect(screen.queryByText('Item B')).not.toBeInTheDocument();
+		expect(getGridItems()).toHaveLength(2);
+		expect(getGridItemByText('Item C')).toHaveStyle({ position: 'absolute' });
+	});
+
+	it('layout metadata 更新时同步到网格项', () => {
+		const child = <div key="1">Item 1</div>;
+		const { rerender } = render(
+			<GridLayout
+				width={1200}
+				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }]}
+				cols={12}
+				rowHeight={30}
+			>
+				{child}
+			</GridLayout>,
+		);
+
+		expect(getGridItemByText('Item 1')).toHaveClass('static');
+
+		rerender(
+			<GridLayout
+				width={1200}
+				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: false }]}
+				cols={12}
+				rowHeight={30}
+			>
+				{child}
+			</GridLayout>,
+		);
+
+		const item = getGridItemByText('Item 1');
+		expect(item).not.toHaveClass('static');
+		expect(item).toHaveClass('react-draggable');
+	});
+
 	it('禁用拖拽', () => {
 		renderBasicGrid({ isDraggable: false });
 
