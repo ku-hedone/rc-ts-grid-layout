@@ -13,7 +13,7 @@ import { Resizable } from 'react-resizable';
 import { fastGridItemPropsEqual, resizeItemInDirection } from './utils';
 import { calcGridItemWHPx, calcGridColWidth, calcWH, clamp, calcXY } from './calculate';
 import { calcGridItemPosition, createStyle } from './utils.item';
-import { isEqual } from 'lodash';
+import { deepEqual } from './equals';
 import type { CSSProperties, FC, ReactElement, ReactNode, Ref } from 'react';
 import type {
 	Dragging,
@@ -424,7 +424,7 @@ const Wrapper: FC<WrapperProps> = memo(
 		const child = Children.only(children) as ItemProps['children'];
 		return <GridItem {...props}>{child}</GridItem>;
 	},
-	(prev, next) => fastGridItemPropsEqual(prev, next, isEqual),
+	(prev, next) => fastGridItemPropsEqual(prev, next, deepEqual),
 );
 
 export default Wrapper;

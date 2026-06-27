@@ -11,6 +11,9 @@ import { bottom, cloneLayout, cloneLayoutItem, getStatics } from './layout';
 
 const heightWidth = { x: 'w', y: 'h' } as const;
 
+/** 最大递归深度限制，防止环形碰撞导致栈溢出 */
+const MAX_COMPACTION_RECURSION_DEPTH = 100;
+
 /**
  * 在向下移动元素之前，检查移动是否会导致碰撞，并先移动那些元素。
  *
@@ -19,6 +22,7 @@ const heightWidth = { x: 'w', y: 'h' } as const;
  * @param moveToCoord - 目标坐标
  * @param axis - 移动的轴（'x' 或 'y'）
  * @param hasStatics - 布局是否包含静态项（禁用提前退出优化）
+ * @param depth - 当前递归深度（防止栈溢出）
  */
 function resolveCompactionCollision(
 	layout: Layout,
@@ -26,7 +30,14 @@ function resolveCompactionCollision(
 	moveToCoord: number,
 	axis: 'x' | 'y',
 	hasStatics?: boolean,
+	depth: number = 0,
 ) {
+	// 防止递归过深导致栈溢出
+	if (depth >= MAX_COMPACTION_RECURSION_DEPTH) {
+		item[axis] = moveToCoord;
+		return;
+	}
+
 	const sizeProp = heightWidth[axis];
 	item[axis] += 1;
 	const itemIndex = layout
@@ -50,7 +61,7 @@ function resolveCompactionCollision(
 			if (!layoutHasStatics && otherItem.y > item.y + item.h) break;
 
 			if (collides(item, otherItem)) {
-				resolveCompactionCollision(layout, otherItem, moveToCoord + item[sizeProp], axis, layoutHasStatics);
+				resolveCompactionCollision(layout, otherItem, moveToCoord + item[sizeProp], axis, layoutHasStatics, depth + 1);
 			}
 		}
 	}

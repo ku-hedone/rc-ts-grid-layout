@@ -108,6 +108,7 @@ export const fastRGLPropsEqual = (
 		a.preventCollision === b.preventCollision &&
 		a.useCSSTransforms === b.useCSSTransforms &&
 		a.isDroppable === b.isDroppable &&
+		a.mergeStyle === b.mergeStyle &&
 		// 函数类型
 		a.onLayoutChange === b.onLayoutChange &&
 		a.onDragStart === b.onDragStart &&
@@ -117,6 +118,7 @@ export const fastRGLPropsEqual = (
 		a.onResize === b.onResize &&
 		a.onResizeStop === b.onResizeStop &&
 		a.onDrop === b.onDrop &&
+		a.onDropDragOver === b.onDropDragOver &&
 		// 数组类型
 		isEqualImpl(a.resizeHandles, b.resizeHandles) &&
 		isEqualImpl(a.layout, b.layout) &&
@@ -127,6 +129,7 @@ export const fastRGLPropsEqual = (
 		isEqualImpl(a.containerPadding, b.containerPadding) &&
 		isEqualImpl(a.droppingItem, b.droppingItem) &&
 		isEqualImpl(a.innerRef, b.innerRef) &&
+		isEqualImpl(a.attributes, b.attributes) &&
 		isEqualImpl(a.wrapperProps, b.wrapperProps)
 	);
 };

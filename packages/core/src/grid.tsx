@@ -26,7 +26,6 @@ import { deepEqual } from './equals';
 import { calcXY } from './calculate';
 import { flushSync } from 'react-dom';
 import { layoutClassName } from './constant';
-import { isEqual } from 'lodash';
 import './grid.css';
 import 'react-resizable/css/styles.css';
 import type { DragEventHandler, ReactElement, ReactNode, FC } from 'react';
@@ -430,12 +429,12 @@ const GridLayout: FC<RGLProps> = memo(
 						? currentLayout
 						: compact(currentLayout, innerPropsRef.current.compactType, cols);
 					flushSync(() => {
-						if (!isEqual(nextRect, lastRect.current)) {
+						if (!deepEqual(nextRect, lastRect.current)) {
 							setRect(nextRect);
 							lastRect.current = nextRect;
 						}
 
-						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
+						if (!deepEqual(innerPropsRef.current.layout, nextInnerLayout)) {
 							setInnerLayout(nextInnerLayout);
 						}
 					});
@@ -475,7 +474,7 @@ const GridLayout: FC<RGLProps> = memo(
 						lastRect.current = void 0;
 						flushSync(() => {
 							setRect(void 0);
-							if (!isEqual(innerPropsRef.current.layout, nextLayout)) {
+							if (!deepEqual(innerPropsRef.current.layout, nextLayout)) {
 								setInnerLayout(nextLayout);
 							}
 						});
@@ -599,11 +598,11 @@ const GridLayout: FC<RGLProps> = memo(
 						: compact(finalLayout, innerPropsRef.current.compactType, cols);
 					flushSync(() => {
 						// 重新紧凑排列布局并设置拖拽占位元素。
-						if (!isEqual(lastRect.current, placeholder)) {
+						if (!deepEqual(lastRect.current, placeholder)) {
 							setRect(placeholder);
 							lastRect.current = placeholder;
 						}
-						if (!isEqual(innerPropsRef.current.layout, nextInnerLayout)) {
+						if (!deepEqual(innerPropsRef.current.layout, nextInnerLayout)) {
 							setInnerLayout(nextInnerLayout);
 						}
 					});
@@ -626,7 +625,7 @@ const GridLayout: FC<RGLProps> = memo(
 				old.current = void 0;
 				resizing.current = false;
 				flushSync(() => {
-					if (!isEqual(innerPropsRef.current.layout, nextLayout)) {
+					if (!deepEqual(innerPropsRef.current.layout, nextLayout)) {
 						setInnerLayout(nextLayout);
 					}
 					setRect(void 0);
@@ -792,7 +791,7 @@ const GridLayout: FC<RGLProps> = memo(
 		);
 	},
 	(prev, next) =>
-		prev.children === next.children && fastRGLPropsEqual(prev, next, isEqual),
+		prev.children === next.children && fastRGLPropsEqual(prev, next, deepEqual),
 );
 
 export default GridLayout;
