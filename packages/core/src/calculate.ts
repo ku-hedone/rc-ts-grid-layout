@@ -43,7 +43,8 @@ export function calcXY(
 	w: number,
 	h: number,
 ): { x: number; y: number } {
-	const { margin, cols, rowHeight, maxRows, containerPadding = margin } = positionParams;
+	const { margin, cols, rowHeight, maxRows, containerPadding: containerPaddingRaw } = positionParams;
+	const containerPadding = containerPaddingRaw ?? margin;
 	const colWidth = calcGridColWidth(positionParams);
 
 	// left = colWidth * x + margin[0] * x + containerPadding[0]

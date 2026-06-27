@@ -22,8 +22,7 @@ describe('GridLayout - 拖拽回调', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onDragStop={onDragStop}
 			>
 				<div key="1">Item 1</div>
@@ -79,8 +78,7 @@ describe('GridLayout - 拖拽回调', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onResizeStop={onResizeStop}
 			>
 				<div key="1">Item 1</div>

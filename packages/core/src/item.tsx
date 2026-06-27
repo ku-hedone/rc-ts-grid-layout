@@ -501,7 +501,7 @@ const GridItem = (props: ItemProps) => {
 				onResizeStart={onGridResizeStart}
 				onResize={onGridResize}
 				transformScale={transformScale}
-				resizeHandles={resizeHandles}
+				resizeHandles={resizeHandles ? [...resizeHandles] : undefined}
 				handle={resizeHandle}>
 					{typeof wrapperProps === 'undefined' ? (
 						cloneElement(children as ReactElement<GridChildProps>, {

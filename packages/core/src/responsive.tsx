@@ -6,8 +6,9 @@ import {
 	getColsFromBreakpoint,
 	findOrGenerateResponsiveLayout,
 } from './utils.responsive';
+import { verticalCompactor } from './compactors';
 import GridLayout from './grid';
-import type { Layout } from './type';
+import type { Layout, Compactor } from './type';
 import type { Breakpoint, ResponsiveLayout, ResponsiveRGLProps } from './type.responsive';
 
 const defaultProps = {
@@ -15,7 +16,7 @@ const defaultProps = {
 	cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
 	layouts: {} as ResponsiveLayout<Breakpoint>,
 	margin: [10, 10] as [number, number],
-	allowOverlap: false,
+	compactor: verticalCompactor,
 };
 
 const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
@@ -27,14 +28,18 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 		width,
 		margin = defaultProps.margin,
 		containerPadding = {},
-		allowOverlap = defaultProps.allowOverlap,
+		compactor: compactorProp = defaultProps.compactor,
 		onBreakpointChange,
 		onLayoutChange,
 		onWidthChange,
-		compactType,
 		children,
+		gridConfig: gridConfigProp,
 		...otherProps
 	} = props;
+
+	const compactor = compactorProp;
+	const compactType = compactor.type;
+	const allowOverlap = compactor.allowOverlap;
 
 	const innerLayouts = useRef<ResponsiveLayout<Breakpoint>>(layouts);
 
@@ -72,7 +77,7 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 			nextBreakpoint,
 			nextBreakpoint,
 			nextCols,
-			otherProps.verticalCompact === false ? void 0 : compactType,
+			compactType,
 		),
 	);
 
@@ -137,7 +142,7 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 				});
 				setLayout(nextLayout);
 			}
-			const marginValue = getIndentationValue(margin, nextBreakpoint);
+			const marginValue = getIndentationValue(margin, nextBreakpoint) ?? [10, 10];
 			const containerPaddingValue = getIndentationValue(containerPadding, nextBreakpoint);
 			if (typeof onWidthChange === 'function') {
 				onWidthChange(width, marginValue, nextCols, containerPaddingValue);
@@ -197,12 +202,15 @@ const ResponsiveGridLayout = (props: ResponsiveRGLProps) => {
 		<GridLayout
 			{...otherProps}
 			width={width}
-			margin={innerMargin}
-			containerPadding={innerContainerPadding}
+			gridConfig={{
+				...gridConfigProp,
+				cols: state.cols,
+				margin: innerMargin ?? [10, 10],
+				containerPadding: innerContainerPadding ?? null,
+			}}
+			compactor={compactor}
 			onLayoutChange={onInnerLayoutChange}
-			layout={innerLayout}
-			cols={state.cols}
-			compactType={compactType}>
+			layout={innerLayout}>
 			{children}
 		</GridLayout>
 	);

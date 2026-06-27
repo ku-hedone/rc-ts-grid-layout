@@ -38,7 +38,7 @@ describe('public api', () => {
 		});
 		expect(defaultDropConfig).toEqual({
 			enabled: false,
-			defaultItem: { w: 1, h: 1 },
+			defaultItem: { w: 1, h: 1, i: '__dropping-elem__' },
 		});
 	});
 });

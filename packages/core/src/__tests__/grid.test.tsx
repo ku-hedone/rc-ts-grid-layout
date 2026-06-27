@@ -6,6 +6,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import GridLayout from '../grid';
+import { verticalCompactor, horizontalCompactor, noCompactor, verticalOverlapCompactor } from '../compactors';
+import { transformStrategy, absoluteStrategy } from '../position';
 import type { Layout, LayoutItem } from '../type';
 
 // 辅助函数：创建布局
@@ -22,8 +24,7 @@ function renderBasicGrid(props: Partial<React.ComponentProps<typeof GridLayout>>
 		<GridLayout
 			width={1200}
 			layout={createLayout()}
-			cols={12}
-			rowHeight={30}
+			gridConfig={{ cols: 12, rowHeight: 30 }}
 			{...props}
 		>
 			<div key="1">Item 1</div>
@@ -107,8 +108,7 @@ describe('GridLayout', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Static Item</div>
 				<div key="2">Draggable Item</div>
@@ -127,8 +127,7 @@ describe('GridLayout', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: 'a', x: 0, y: 0, w: 2, h: 2 }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 			</GridLayout>,
@@ -141,8 +140,7 @@ describe('GridLayout', () => {
 					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
 					{ i: 'b', x: 2, y: 0, w: 2, h: 2 },
 				]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="b">Item B</div>
@@ -156,8 +154,7 @@ describe('GridLayout', () => {
 					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
 					{ i: 'c', x: 4, y: 0, w: 2, h: 2 },
 				]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="c">Item C</div>
@@ -176,8 +173,7 @@ describe('GridLayout', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				{child}
 			</GridLayout>,
@@ -189,8 +185,7 @@ describe('GridLayout', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: false }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				{child}
 			</GridLayout>,
@@ -202,7 +197,7 @@ describe('GridLayout', () => {
 	});
 
 	it('禁用拖拽', () => {
-		renderBasicGrid({ isDraggable: false });
+		renderBasicGrid({ dragConfig: { enabled: false } });
 
 		const items = getGridItems();
 		expect(items).toHaveLength(3);
@@ -212,14 +207,14 @@ describe('GridLayout', () => {
 	});
 
 	it('禁用缩放', () => {
-		renderBasicGrid({ isResizable: false });
+		renderBasicGrid({ resizeConfig: { enabled: false } });
 
 		const hiddenResizeItems = document.querySelectorAll('.react-resizable-hide');
 		expect(hiddenResizeItems).toHaveLength(3);
 	});
 
 	it('启用缩放', () => {
-		renderBasicGrid({ isResizable: true });
+		renderBasicGrid({ resizeConfig: { enabled: true } });
 
 		const items = getGridItems();
 		expect(items).toHaveLength(3);
@@ -229,7 +224,7 @@ describe('GridLayout', () => {
 	});
 
 	it('使用 CSS transforms 定位', async () => {
-		renderBasicGrid({ useCSSTransforms: true });
+		renderBasicGrid({ positionStrategy: transformStrategy });
 
 		const item = getGridItemByText('Item 1');
 		await waitFor(() => expect(item).toHaveClass('cssTransforms'));
@@ -239,7 +234,7 @@ describe('GridLayout', () => {
 	});
 
 	it('使用 top/left 定位', async () => {
-		renderBasicGrid({ useCSSTransforms: false });
+		renderBasicGrid({ positionStrategy: absoluteStrategy });
 
 		const item = getGridItemByText('Item 1');
 		expect(item).not.toHaveClass('cssTransforms');
@@ -255,8 +250,7 @@ describe('GridLayout', () => {
 			<GridLayout
 				width={1200}
 				layout={[]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -279,9 +273,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				allowOverlap={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={verticalOverlapCompactor}
 			>
 				<div key="1">Item 1</div>
 				<div key="2">Item 2</div>
@@ -307,9 +300,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				allowOverlap={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={verticalOverlapCompactor}
 				onLayoutChange={onLayoutChange}
 			>
 				<div key="1">Item 1</div>
@@ -342,10 +334,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				allowOverlap={false}
-				compactType="vertical"
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={verticalCompactor}
 				onLayoutChange={onLayoutChange}
 			>
 				<div key="1">Item 1</div>
@@ -383,9 +373,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				compactType="vertical"
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={verticalCompactor}
 				onLayoutChange={onLayoutChange}
 			>
 				<div key="1">Item 1</div>
@@ -411,9 +400,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				compactType="horizontal"
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={horizontalCompactor}
 				onLayoutChange={onLayoutChange}
 			>
 				<div key="1">Item 1</div>
@@ -437,11 +425,9 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				margin={[10, 10]}
-				compactType={null}
-				useCSSTransforms={false}
+				gridConfig={{ cols: 12, rowHeight: 30, margin: [10, 10] }}
+				compactor={noCompactor}
+				positionStrategy={absoluteStrategy}
 			>
 				<div key="1">Item 1</div>
 				<div key="2">Item 2</div>
@@ -463,9 +449,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isDraggable={false}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				dragConfig={{ enabled: false }}
 			>
 				<div key="1">Item 1</div>
 				<div key="2">Item 2</div>
@@ -487,9 +472,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isResizable={false}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				resizeConfig={{ enabled: false }}
 			>
 				<div key="1">Item 1</div>
 				<div key="2">Item 2</div>
@@ -508,10 +492,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				margin={[20, 20]}
-				useCSSTransforms={true}
+				gridConfig={{ cols: 12, rowHeight: 30, margin: [20, 20] }}
+				positionStrategy={transformStrategy}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -528,11 +510,8 @@ describe('GridLayout - Props 行为回归', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				containerPadding={[30, 30]}
-				margin={[10, 10]}
-				useCSSTransforms={true}
+				gridConfig={{ cols: 12, rowHeight: 30, containerPadding: [30, 30], margin: [10, 10] }}
+				positionStrategy={transformStrategy}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -550,8 +529,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: 'a', x: 0, y: 0, w: 2, h: 2 }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 			</GridLayout>,
@@ -568,8 +546,7 @@ describe('GridLayout - children/layout 同步', () => {
 					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
 					{ i: 'b', x: 2, y: 0, w: 2, h: 2 },
 				]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="b">Item B</div>
@@ -587,8 +564,7 @@ describe('GridLayout - children/layout 同步', () => {
 					{ i: 'a', x: 0, y: 0, w: 2, h: 2 },
 					{ i: 'c', x: 4, y: 0, w: 2, h: 2 },
 				]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="c">Item C</div>
@@ -607,8 +583,7 @@ describe('GridLayout - children/layout 同步', () => {
 					{ i: 'd', x: 0, y: 0, w: 3, h: 3 },
 					{ i: 'e', x: 3, y: 0, w: 3, h: 3 },
 				]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="d">Item D</div>
 				<div key="e">Item E</div>
@@ -633,8 +608,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={stableLayout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="b">Item B</div>
@@ -648,8 +622,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={stableLayout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="a">Item A</div>
 				<div key="c">Item C</div>
@@ -665,8 +638,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={stableLayout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="d">Item D</div>
 				<div key="c">Item C</div>
@@ -689,8 +661,7 @@ describe('GridLayout - children/layout 同步', () => {
 				<GridLayout
 					width={1200}
 					layout={stableLayout}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="x">Item X</div>
 					<div key="y">Item Y</div>
@@ -706,8 +677,7 @@ describe('GridLayout - children/layout 同步', () => {
 				<GridLayout
 					width={1200}
 					layout={stableLayout}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="x">Item X</div>
 					<div key="z">Item Z</div>
@@ -729,8 +699,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onResize={onResize}
 			>
 				<div key="1">Item 1</div>
@@ -775,10 +744,9 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onResize={onResize}
-				resizeHandles={['se']}
+				resizeConfig={{ handles: ['se'] }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -817,8 +785,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -832,8 +799,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: false }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -847,8 +813,7 @@ describe('GridLayout - children/layout 同步', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -869,8 +834,7 @@ describe('GridLayout - children/layout 同步', () => {
 						{ i: '1', x: 0, y: 0, w: 2, h: 2 },
 						{ i: '2', x: 2, y: 0, w: 2, h: 2 },
 					]}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="1">Item 1</div>
 					<div key="2">Item 2</div>
@@ -897,8 +861,7 @@ describe('GridLayout - children/layout 同步', () => {
 				<GridLayout
 					width={1200}
 					layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2 }]}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="1">Item 1</div>
 				</GridLayout>
@@ -915,8 +878,7 @@ describe('GridLayout - children/layout 同步', () => {
 						{ i: '1', x: 0, y: 0, w: 2, h: 2 },
 						{ i: '2', x: 2, y: 0, w: 2, h: 2 },
 					]}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="1">Item 1</div>
 					<div key="2">Item 2</div>
@@ -935,8 +897,7 @@ describe('GridLayout - children/layout 同步', () => {
 						{ i: '2', x: 2, y: 0, w: 2, h: 2 },
 						{ i: '3', x: 4, y: 0, w: 2, h: 2 },
 					]}
-					cols={12}
-					rowHeight={30}
+					gridConfig={{ cols: 12, rowHeight: 30 }}
 				>
 					<div key="1">Item 1</div>
 					<div key="2">Item 2</div>

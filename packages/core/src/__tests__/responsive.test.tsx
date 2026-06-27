@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ResponsiveGridLayout from '../responsive';
+import { verticalCompactor } from '../compactors';
 import type { Layout } from '../type';
 import type { Breakpoint, Breakpoints, ResponsiveLayout } from '../type.responsive';
 
@@ -49,7 +50,7 @@ describe('ResponsiveGridLayout', () => {
 		const { rerender } = render(
 			<ResponsiveGridLayout
 				width={1300}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				layouts={layouts}
 				margin={margin}
 				containerPadding={containerPadding}
@@ -65,7 +66,7 @@ describe('ResponsiveGridLayout', () => {
 		rerender(
 			<ResponsiveGridLayout
 				width={800}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				layouts={layouts}
 				margin={margin}
 				containerPadding={containerPadding}
@@ -110,7 +111,7 @@ describe('ResponsiveGridLayout', () => {
 		const { rerender } = render(
 			<ResponsiveGridLayout
 				width={1000}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				breakpoints={defaultBreakpoints}
 				cols={defaultCols}
 				layouts={layouts}
@@ -123,7 +124,7 @@ describe('ResponsiveGridLayout', () => {
 		rerender(
 			<ResponsiveGridLayout
 				width={1000}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				breakpoints={changedBreakpoints}
 				cols={changedCols}
 				layouts={layouts}
@@ -144,7 +145,7 @@ describe('ResponsiveGridLayout', () => {
 			<ResponsiveGridLayout
 				breakpoint="xs"
 				width={1300}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				layouts={responsiveLayouts({
 					xs: [{ i: 'a', x: 0, y: 0, w: 1, h: 1 }],
 				})}>

@@ -1,6 +1,6 @@
 export type PositionParams = {
-	margin: [number, number];
-	containerPadding?: [number, number];
+	margin: readonly [number, number];
+	containerPadding?: readonly [number, number] | null;
 	containerWidth: number;
 	cols: number;
 	rowHeight: number;

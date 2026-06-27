@@ -8,6 +8,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 import GridLayout from '../grid';
+import { verticalCompactor, noCompactor, verticalOverlapCompactor } from '../compactors';
 import type { Layout } from '../type';
 
 // 辅助函数：获取第一个可拖拽 item 及其 bounding box
@@ -88,8 +89,7 @@ describe('GridLayout - 拖拽交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onDragStart={onDragStart}
 				onDrag={onDrag}
 				onDragStop={onDragStop}
@@ -136,10 +136,8 @@ describe('GridLayout - 拖拽交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				preventCollision={true}
-				compactType={null}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={{ ...noCompactor, preventCollision: true }}
 				onDragStop={onDragStop}
 			>
 				<div key="1">Item 1</div>
@@ -195,9 +193,8 @@ describe('GridLayout - 拖拽交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				allowOverlap={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={verticalOverlapCompactor}
 				onDragStop={onDragStop}
 			>
 				<div key="1">Item 1</div>
@@ -243,8 +240,7 @@ describe('GridLayout - 拖拽交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onDragStart={onDragStart}
 			>
 				<div key="1">Static Item</div>
@@ -283,9 +279,8 @@ describe('GridLayout - 拖拽交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isDraggable={false}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				dragConfig={{ enabled: false }}
 				onDragStart={onDragStart}
 			>
 				<div key="1">Item 1</div>
@@ -326,8 +321,7 @@ describe('GridLayout - 缩放交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 				onResizeStart={onResizeStart}
 				onResize={onResize}
 				onResizeStop={onResizeStop}
@@ -372,9 +366,8 @@ describe('GridLayout - 缩放交互', () => {
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				preventCollision={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				compactor={{ ...verticalCompactor, preventCollision: true }}
 				onResizeStop={onResizeStop}
 			>
 				<div key="1">Item 1</div>
@@ -412,9 +405,8 @@ describe('GridLayout - 缩放交互', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2 }]}
-				cols={12}
-				rowHeight={30}
-				isResizable={false}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				resizeConfig={{ enabled: false }}
 			>
 				<div key="1">Item 1</div>
 			</GridLayout>,
@@ -430,8 +422,7 @@ describe('GridLayout - 缩放交互', () => {
 			<GridLayout
 				width={1200}
 				layout={[{ i: '1', x: 0, y: 0, w: 2, h: 2, static: true }]}
-				cols={12}
-				rowHeight={30}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
 			>
 				<div key="1">Static Item</div>
 			</GridLayout>,

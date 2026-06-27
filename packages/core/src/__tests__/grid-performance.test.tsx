@@ -26,8 +26,7 @@ describe('GridLayout - 性能优化', () => {
 					<GridLayout
 						width={1200}
 						layout={layout}
-						cols={12}
-						rowHeight={30}
+						gridConfig={{ cols: 12, rowHeight: 30 }}
 					>
 						<div key="1">Item 1</div>
 						<div key="2">Item 2</div>
@@ -66,8 +65,7 @@ describe('GridLayout - 性能优化', () => {
 					<GridLayout
 						width={1200}
 						layout={currentLayout}
-						cols={12}
-						rowHeight={30}
+						gridConfig={{ cols: 12, rowHeight: 30 }}
 					>
 						<div key="1">Item 1</div>
 					</GridLayout>
@@ -103,8 +101,7 @@ describe('GridLayout - 性能优化', () => {
 					<GridLayout
 						width={width}
 						layout={layout}
-						cols={12}
-						rowHeight={30}
+						gridConfig={{ cols: 12, rowHeight: 30 }}
 					>
 						<div key="1">Item 1</div>
 					</GridLayout>

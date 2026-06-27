@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ResizeResponsiveGridLayout from '../resize';
 import ResizeGridLayout from '../resize.grid';
 import type { Layout } from '../type';
-import type { Breakpoint, ResponsiveLayout } from '../type.responsive';
+import type { Breakpoint, Breakpoints, ResponsiveLayout } from '../type.responsive';
 
 class TestResizeObserver implements ResizeObserver {
 	static instances: TestResizeObserver[] = [];
@@ -86,8 +86,7 @@ describe('ResizeObserver wrappers', () => {
 				className="measured-grid"
 				style={{ minHeight: 40 }}
 				layout={layout}
-				cols={12}
-				rowHeight={30}>
+				gridConfig={{ cols: 12, rowHeight: 30 }}>
 				<div key="a">Measured item</div>
 			</ResizeGridLayout>,
 		);
@@ -122,7 +121,7 @@ describe('ResizeObserver wrappers', () => {
 		const { unmount } = render(
 			<ResizeResponsiveGridLayout
 				layouts={layouts}
-				rowHeight={30}
+				gridConfig={{ rowHeight: 30 }}
 				onBreakpointChange={onBreakpointChange}
 				onLayoutChange={onLayoutChange}
 				onWidthChange={onWidthChange}>

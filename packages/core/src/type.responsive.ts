@@ -10,50 +10,30 @@ export type Breakpoints<T extends Breakpoint> = {
 	readonly [breakpoint in T]: number;
 };
 
-type ExtendCallbackPropKeys =
-	| 'onDrag'
-	| 'onDragStart'
-	| 'onDragStop'
-	| 'onResize'
-	| 'onResizeStart'
-	| 'onResizeStop'
-	| 'onDropDragOver'
-	| 'onDrop';
-
-type ExtendPropKeys =
+type PassThroughPropKeys =
 	| 'children'
 	| 'innerRef'
 	| 'className'
 	| 'style'
 	| 'width'
 	| 'autoSize'
-	| 'allowOverlap'
-	| 'compactType'
-	| 'verticalCompact'
 	| 'layout'
-	| 'rowHeight'
-	| 'maxRows'
-	| 'isBounded'
-	| 'preventCollision'
-	| 'useCSSTransforms'
-	| 'transformScale'
-	| 'droppingItem';
+	| 'gridConfig'
+	| 'dragConfig'
+	| 'resizeConfig'
+	| 'dropConfig'
+	| 'compactor'
+	| 'positionStrategy'
+	| 'constraints'
+	| 'onDrag'
+	| 'onDragStart'
+	| 'onDragStop'
+	| 'onResize'
+	| 'onResizeStart'
+	| 'onResizeStop'
+	| 'onDrop';
 
-type ExtendDropPropsKeys = 'isDroppable';
-
-type ExtendDragPropsKeys = 'isDraggable' | 'draggableCancel' | 'draggableHandle';
-
-type ExtendResizePropsKeys = 'isResizable' | 'resizeHandles' | 'resizeHandle';
-
-export interface ResponsiveRGLProps
-	extends Pick<
-		RGLProps,
-		| ExtendPropKeys
-		| ExtendCallbackPropKeys
-		| ExtendDragPropsKeys
-		| ExtendResizePropsKeys
-		| ExtendDropPropsKeys
-	> {
+export interface ResponsiveRGLProps extends Pick<RGLProps, PassThroughPropKeys> {
 	breakpoint?: Breakpoint;
 	breakpoints?: Breakpoints<Breakpoint>;
 	layouts?: ResponsiveLayout<Breakpoint>;
@@ -74,12 +54,12 @@ export interface ResponsiveRGLProps
 	/**
 	 * margin with Breakpoint
 	 */
-	margin?: { [key in Breakpoint]: RGLProps['margin'] } | RGLProps['margin'];
+	margin?: { [key in Breakpoint]: [number, number] } | [number, number];
 
 	onWidthChange?: (
 		containerWidth: number,
-		margin: RGLProps['margin'],
-		cols: RGLProps['cols'],
-		containerPadding: RGLProps['containerPadding'],
+		margin: [number, number],
+		cols: number,
+		containerPadding: [number, number] | undefined,
 	) => void;
 }

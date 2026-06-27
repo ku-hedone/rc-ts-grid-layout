@@ -10,6 +10,9 @@ import React from 'react';
 import GridLayout from '../grid';
 import type { Layout } from '../type';
 
+// Reusable onDropDragOver mock
+const createOnDropDragOver = () => vi.fn().mockReturnValue({ w: 2, h: 2 });
+
 describe('GridItem - Dropping 行为', () => {
 	it('shouldDrag 应该在 dragging 存在时才检查位置变化', () => {
 		// 这个测试验证 shouldDrag 的运算符优先级
@@ -18,17 +21,15 @@ describe('GridItem - Dropping 行为', () => {
 
 		const layout: Layout = [];
 		const onDrop = vi.fn();
-		const onDropDragOver = vi.fn().mockReturnValue({ w: 2, h: 2 });
+		const onDropDragOver = createOnDropDragOver();
 
 		render(
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isDroppable={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				dropConfig={{ enabled: true, onDragOver: onDropDragOver }}
 				onDrop={onDrop}
-				onDropDragOver={onDropDragOver}
 				children={null}
 			/>,
 		);
@@ -57,17 +58,15 @@ describe('GridItem - Dropping 行为', () => {
 	it('dropping item 应该在位置变化时正确更新', () => {
 		const layout: Layout = [];
 		const onDrop = vi.fn();
-		const onDropDragOver = vi.fn().mockReturnValue({ w: 2, h: 2 });
+		const onDropDragOver = createOnDropDragOver();
 
 		render(
 			<GridLayout
 				width={1200}
 				layout={layout}
-				cols={12}
-				rowHeight={30}
-				isDroppable={true}
+				gridConfig={{ cols: 12, rowHeight: 30 }}
+				dropConfig={{ enabled: true, onDragOver: onDropDragOver }}
 				onDrop={onDrop}
-				onDropDragOver={onDropDragOver}
 				children={null}
 			/>,
 		);

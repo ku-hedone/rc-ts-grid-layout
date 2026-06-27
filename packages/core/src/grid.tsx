@@ -13,7 +13,6 @@ import {
 	childrenEqual,
 	cloneLayoutItem,
 	fastRGLPropsEqual,
-	compactType as genCompactType,
 	getAllCollisions,
 	getLayoutItem,
 	moveElement,
@@ -21,7 +20,9 @@ import {
 	synchronizeLayoutWithChildren,
 	withLayoutItem,
 } from './utils';
-import { getCompactor } from './compactors';
+import { verticalCompactor } from './compactors';
+import { defaultGridConfig, defaultDragConfig, defaultResizeConfig, defaultDropConfig } from './type';
+import { defaultPositionStrategy } from './position';
 import GridItem from './item';
 import { deepEqual } from './equals';
 import { calcXY, calcGridColWidth, calcGridItemWHPx } from './calculate';
@@ -31,7 +32,7 @@ import './grid.css';
 import 'react-resizable/css/styles.css';
 import type { DragEventHandler, ReactElement, ReactNode, FC } from 'react';
 import type { DragNativeEvent, DroppingPosition, RGLProps } from './type.rgl';
-import type { CompactType, Layout, LayoutItem } from './type';
+import type { Layout, LayoutItem, CompactType } from './type';
 import type { ItemProps } from './type.item';
 import type { ResizeHandle } from 'react-resizable';
 
@@ -42,14 +43,7 @@ type Rect = Pick<ItemProps, 'w' | 'h' | 'x' | 'y' | 'i'> & {
 
 type DragHandler = DragEventHandler<HTMLDivElement>;
 
-const defaultMargin = [10, 10] as [number, number];
-const defaultResizeHandles: ResizeHandle[] = ['se'];
 const defaultLayout: Layout = [];
-const defaultDroppingItem = {
-	i: '__dropping-elem__',
-	h: 1,
-	w: 1,
-};
 
 // 场景 1
 // wrapper -> layout -> grid-layout
@@ -65,45 +59,57 @@ const GridLayout: FC<RGLProps> = memo(
 	({
 		innerRef,
 		autoSize = true,
-		cols = 12,
 		className = '',
 		style = {},
-		draggableHandle = '',
-		draggableCancel = '',
-		rowHeight = 150,
-		maxRows = Infinity, // 无限垂直增长
 		layout = defaultLayout,
-		margin = defaultMargin,
-		isBounded = false,
-		isDraggable = true,
-		isResizable = true,
-		allowOverlap = false,
-		isDroppable = false,
-		useCSSTransforms = true,
-		transformScale = 1,
-		verticalCompact = true,
-		compactType = 'vertical' as CompactType,
-		preventCollision = false,
-		droppingItem = defaultDroppingItem,
-		resizeHandles = defaultResizeHandles,
-		containerPadding,
 		children,
 		width,
+
+		// 可组合配置
+		gridConfig: gridConfigProp,
+		dragConfig: dragConfigProp,
+		resizeConfig: resizeConfigProp,
+		dropConfig: dropConfigProp,
+		compactor: compactorProp,
+		positionStrategy: positionStrategyProp,
+		constraints,
+
+		// 回调
 		onLayoutChange = noop,
 		onDrop = noop,
-		onDropDragOver = noop,
-		resizeHandle,
 		onDrag = noop,
 		onDragStart = noop,
 		onDragStop = noop,
 		onResizeStart = noop,
 		onResize = noop,
 		onResizeStop = noop,
+
+		// 样式与 DOM
 		mergeStyle = false,
 		attributes = {},
-		constraints,
 		wrapperProps,
 	}) => {
+		// 从 config 对象解构，应用默认值
+		const { cols, rowHeight, margin, containerPadding, maxRows } = {
+			...defaultGridConfig,
+			containerPadding: defaultGridConfig.containerPadding ?? undefined,
+			...gridConfigProp,
+		};
+		const { enabled: isDraggable, bounded: isBounded, handle: draggableHandle, cancel: draggableCancel } = {
+			...defaultDragConfig,
+			...dragConfigProp,
+		};
+		const { enabled: isResizable, handles: resizeHandles, handleComponent: resizeHandle } = {
+			...defaultResizeConfig,
+			...resizeConfigProp,
+		};
+		const { enabled: isDroppable, defaultItem: droppingItemRaw, onDragOver: onDropDragOver } = {
+			...defaultDropConfig,
+			...dropConfigProp,
+		};
+		const droppingItem = { ...droppingItemRaw, i: droppingItemRaw.i ?? '__dropping-elem__' };
+		const innerCompactor = compactorProp ?? verticalCompactor;
+		const innerPositionStrategy = positionStrategyProp ?? defaultPositionStrategy;
 		/**
 		 * 上一个布局项（拖拽/缩放开始时保存）
 		 */
@@ -117,22 +123,6 @@ const GridLayout: FC<RGLProps> = memo(
 		const prevLayoutRef = useRef<Layout>(layout);
 		const prevChildrenRef = useRef<ReactNode>(children);
 		const prevCompactTypeRef = useRef<CompactType>(undefined);
-		// 最终紧凑类型
-		// 兼容 verticalCompact: false 的旧用法
-		const innerCompactType = useMemo(
-			() =>
-				genCompactType({
-					compactType,
-					verticalCompact,
-				}),
-			[compactType, verticalCompact],
-		);
-
-		// 将 compactType + allowOverlap + preventCollision 收敛到 Compactor 策略
-		const innerCompactor = useMemo(
-			() => getCompactor(innerCompactType, allowOverlap, preventCollision),
-			[innerCompactType, allowOverlap, preventCollision],
-		);
 
 		const latestLayout = useMemo(
 			() =>
@@ -140,10 +130,10 @@ const GridLayout: FC<RGLProps> = memo(
 					layout,
 					children,
 					cols,
-					innerCompactType,
-					allowOverlap,
+					innerCompactor.type,
+					innerCompactor.allowOverlap,
 				),
-			[allowOverlap, children, cols, innerCompactType, layout],
+			[children, cols, innerCompactor, layout],
 		);
 
 		const [droppingPosition, setDroppingPosition] = useState<DroppingPosition>();
@@ -151,14 +141,14 @@ const GridLayout: FC<RGLProps> = memo(
 
 		const innerPropsRef = useRef({
 			layout: innerLayout,
-			compactType: innerCompactType,
+			compactType: innerCompactor.type,
 		});
 
 		// 用 useLayoutEffect 更新 ref，避免 render-phase mutation 在 StrictMode 下出错
 		useLayoutEffect(() => {
 			innerPropsRef.current = {
 				layout: innerLayout,
-				compactType: innerCompactType,
+				compactType: innerCompactor.type,
 			};
 		});
 
@@ -198,8 +188,8 @@ const GridLayout: FC<RGLProps> = memo(
 						isDraggable={false}
 						isResizable={false}
 						isBounded={false}
-						useCSSTransforms={useCSSTransforms}
-						transformScale={transformScale}>
+						useCSSTransforms={innerPositionStrategy.type === 'transform'}
+						transformScale={innerPositionStrategy.scale}>
 						<div
 							key="item-placeholder"
 							{...wrapperProps}
@@ -215,8 +205,7 @@ const GridLayout: FC<RGLProps> = memo(
 			maxRows,
 			rect,
 			rowHeight,
-			transformScale,
-			useCSSTransforms,
+			innerPositionStrategy,
 			width,
 			wrapperProps,
 		]);
@@ -314,14 +303,17 @@ const GridLayout: FC<RGLProps> = memo(
 						}
 						return false;
 					}
-					const { w, h, ...dropItem } = { ...droppingItem, ...onDragOverResult };
+					const onDragOverMerged = onDragOverResult
+						? { ...droppingItem, ...onDragOverResult }
+						: { ...droppingItem };
+					const { w, h, ...dropItem } = onDragOverMerged;
 					const gridRect = e.currentTarget.getBoundingClientRect(); // 获取网格在视口中的位置
 					// 计算鼠标相对于网格的位置
 					const layerX = e.clientX - gridRect.left;
 					const layerY = e.clientY - gridRect.top;
 					const position = {
-						left: layerX / transformScale,
-						top: layerY / transformScale,
+						left: layerX / innerPositionStrategy.scale,
+						top: layerY / innerPositionStrategy.scale,
 						e,
 					};
 					if (!droppingDOM.current) {
@@ -387,13 +379,13 @@ const GridLayout: FC<RGLProps> = memo(
 				containerPadding,
 				droppingItem,
 				droppingPosition,
+				innerPositionStrategy,
 				margin,
 				maxRows,
 				onDropDragOver,
 				preventBrowserNativeAction,
 				removeDroppingPlaceholder,
 				rowHeight,
-				transformScale,
 				width,
 			],
 		);
@@ -450,10 +442,10 @@ const GridLayout: FC<RGLProps> = memo(
 						x,
 						y,
 						isUserAction,
-						preventCollision,
+						innerCompactor.preventCollision ?? false,
 						innerPropsRef.current.compactType,
 						cols,
-						allowOverlap,
+						innerCompactor.allowOverlap,
 					);
 					const nextInnerLayout = innerCompactor.compact(currentLayout, cols);
 					flushSync(() => {
@@ -473,7 +465,7 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[preventCollision, cols, allowOverlap, innerCompactor, onDrag],
+			[cols, innerCompactor, onDrag],
 		);
 		const onInnerDragStop: Required<ItemProps>['onDragStop'] = useCallback(
 			(i, x, y, { e, node }) => {
@@ -490,10 +482,10 @@ const GridLayout: FC<RGLProps> = memo(
 							x,
 							y,
 							isUserAction,
-							preventCollision,
+							innerCompactor.preventCollision ?? false,
 							innerPropsRef.current.compactType,
 							cols,
-							allowOverlap,
+							innerCompactor.allowOverlap,
 						);
 						const nextLayout = innerCompactor.compact(currentLayout, cols);
 						old.current = void 0;
@@ -512,7 +504,7 @@ const GridLayout: FC<RGLProps> = memo(
 					}
 				}
 			},
-			[allowOverlap, cols, innerCompactor, onDragStop, preventCollision],
+			[cols, innerCompactor, onDragStop],
 		);
 		// 调整大小相关逻辑
 		const onInnerResizeStart: Required<ItemProps>['onResizeStart'] = useCallback(
@@ -559,7 +551,7 @@ const GridLayout: FC<RGLProps> = memo(
 						}
 						// 应使用类似四叉树的结构
 						// 以更快地检测碰撞
-						if (preventCollision && !allowOverlap) {
+						if (innerCompactor.preventCollision && !innerCompactor.allowOverlap) {
 							const collisions = getAllCollisions(innerPropsRef.current.layout, {
 								...item,
 								w,
@@ -598,10 +590,10 @@ const GridLayout: FC<RGLProps> = memo(
 							x,
 							y,
 							isUserAction,
-							preventCollision,
+							innerCompactor.preventCollision ?? false,
 							innerPropsRef.current.compactType,
 							cols,
-							allowOverlap,
+							innerCompactor.allowOverlap,
 						);
 					}
 					// 创建占位元素（仅用于显示）
@@ -632,7 +624,7 @@ const GridLayout: FC<RGLProps> = memo(
 					});
 				}
 			},
-			[allowOverlap, cols, innerCompactor, onResize, preventCollision],
+			[cols, innerCompactor, onResize],
 		);
 		const onInnerResizeStop: Required<ItemProps>['onResizeStop'] = useCallback(
 			(i, _w, _h, { e, node }) => {
@@ -702,9 +694,9 @@ const GridLayout: FC<RGLProps> = memo(
 							isDraggable={draggable}
 							isResizable={resizable}
 							isBounded={bounded}
-							useCSSTransforms={useCSSTransforms && mounted}
+							useCSSTransforms={innerPositionStrategy.type === 'transform' && mounted}
 							usePercentages={!mounted}
-							transformScale={transformScale}
+							transformScale={innerPositionStrategy.scale}
 							w={w}
 							h={h}
 							x={x}
@@ -731,12 +723,10 @@ const GridLayout: FC<RGLProps> = memo(
 			[
 				cols,
 				containerPadding,
-				draggableCancel,
-				draggableHandle,
+				dragConfigProp,
 				droppingPosition,
-				isBounded,
-				isDraggable,
-				isResizable,
+				innerLayout,
+				innerPositionStrategy,
 				margin,
 				maxRows,
 				mounted,
@@ -746,13 +736,9 @@ const GridLayout: FC<RGLProps> = memo(
 				onInnerResize,
 				onInnerResizeStart,
 				onInnerResizeStop,
-				resizeHandle,
-				resizeHandles,
+				resizeConfigProp,
 				rowHeight,
-				transformScale,
-				useCSSTransforms,
 				width,
-				innerLayout,
 				wrapperProps,
 			],
 		);
@@ -780,7 +766,7 @@ const GridLayout: FC<RGLProps> = memo(
 			}
 			// 初始化 prevCompactTypeRef（首次渲染后）
 			if (prevCompactTypeRef.current === undefined) {
-				prevCompactTypeRef.current = innerCompactType;
+				prevCompactTypeRef.current = innerCompactor.type;
 			}
 		});
 
@@ -795,12 +781,12 @@ const GridLayout: FC<RGLProps> = memo(
 
 			const layoutChanged = !deepEqual(prevLayoutRef.current, layout);
 			const childrenChanged = !childrenEqual(prevChildrenRef.current, children);
-			const compactTypeChanged = prevCompactTypeRef.current !== innerCompactType;
+			const compactTypeChanged = prevCompactTypeRef.current !== innerCompactor.type;
 
 			// 更新 prev refs（在比较之后、同步之前）
 			prevLayoutRef.current = layout;
 			prevChildrenRef.current = children;
-			prevCompactTypeRef.current = innerCompactType;
+			prevCompactTypeRef.current = innerCompactor.type;
 
 			// props layout 或 children 或 compactType 变化时，重新同步
 			if (layoutChanged || childrenChanged || compactTypeChanged) {
@@ -808,8 +794,8 @@ const GridLayout: FC<RGLProps> = memo(
 					layout,
 					children,
 					cols,
-					innerCompactType,
-					allowOverlap,
+					innerCompactor.type,
+					innerCompactor.allowOverlap,
 				);
 				setInnerLayout(synced);
 				if (mounted) {

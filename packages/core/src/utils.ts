@@ -89,25 +89,10 @@ export const fastRGLPropsEqual = (
 	return (
 		// 数值类型
 		a.width === b.width &&
-		a.cols === b.cols &&
-		a.rowHeight === b.rowHeight &&
-		a.maxRows === b.maxRows &&
-		a.transformScale === b.transformScale &&
 		// 字符串类型
 		a.className === b.className &&
-		a.draggableCancel === b.draggableCancel &&
-		a.draggableHandle === b.draggableHandle &&
-		a.compactType === b.compactType &&
 		// 布尔类型
-		a.verticalCompact === b.verticalCompact &&
 		a.autoSize === b.autoSize &&
-		a.isBounded === b.isBounded &&
-		a.isDraggable === b.isDraggable &&
-		a.isResizable === b.isResizable &&
-		a.allowOverlap === b.allowOverlap &&
-		a.preventCollision === b.preventCollision &&
-		a.useCSSTransforms === b.useCSSTransforms &&
-		a.isDroppable === b.isDroppable &&
 		a.mergeStyle === b.mergeStyle &&
 		// 函数类型
 		a.onLayoutChange === b.onLayoutChange &&
@@ -118,17 +103,19 @@ export const fastRGLPropsEqual = (
 		a.onResize === b.onResize &&
 		a.onResizeStop === b.onResizeStop &&
 		a.onDrop === b.onDrop &&
-		a.onDropDragOver === b.onDropDragOver &&
+		a.onDrop === b.onDrop &&
+		// 配置对象
+		isEqualImpl(a.gridConfig, b.gridConfig) &&
+		isEqualImpl(a.dragConfig, b.dragConfig) &&
+		isEqualImpl(a.resizeConfig, b.resizeConfig) &&
+		isEqualImpl(a.dropConfig, b.dropConfig) &&
+		a.compactor === b.compactor &&
+		a.positionStrategy === b.positionStrategy &&
 		// 数组类型
-		isEqualImpl(a.resizeHandles, b.resizeHandles) &&
 		isEqualImpl(a.layout, b.layout) &&
-		isEqualImpl(a.margin, b.margin) &&
 		isEqualImpl(a.constraints, b.constraints) &&
 		// 对象类型
-		isEqualImpl(a.resizeHandle, b.resizeHandle) &&
 		isEqualImpl(a.style, b.style) &&
-		isEqualImpl(a.containerPadding, b.containerPadding) &&
-		isEqualImpl(a.droppingItem, b.droppingItem) &&
 		isEqualImpl(a.innerRef, b.innerRef) &&
 		isEqualImpl(a.attributes, b.attributes) &&
 		isEqualImpl(a.wrapperProps, b.wrapperProps)

@@ -1,8 +1,8 @@
 import type { CSSProperties, SyntheticEvent, ReactElement } from 'react';
-import type { ResizableProps, ResizeCallbackData, ResizeHandle } from 'react-resizable';
+import type { ResizableProps, ResizeCallbackData } from 'react-resizable';
 import type { DroppingPosition, RGLProps } from './type.rgl';
 import type { DraggableEvent, DraggableData } from 'react-draggable';
-import type { Layout, LayoutConstraint, Position } from './type';
+import type { Layout, LayoutConstraint, Position, ResizeHandleAxis } from './type';
 
 type GridDragEvent = {
 	e: DraggableEvent;
@@ -33,8 +33,8 @@ export interface ItemProps extends Pick<RGLProps, 'wrapperProps'> {
 	children: ReactElement;
 	cols: number;
 	containerWidth: number;
-	margin: [number, number];
-	containerPadding?: [number, number];
+	margin: readonly [number, number];
+	containerPadding?: readonly [number, number] | null;
 	rowHeight: number;
 	maxRows: number;
 
@@ -64,7 +64,7 @@ export interface ItemProps extends Pick<RGLProps, 'wrapperProps'> {
 	maxH?: number;
 	i: string;
 
-	resizeHandles?: ResizeHandle[];
+	resizeHandles?: readonly ResizeHandleAxis[];
 	resizeHandle?: ResizableProps['handle'];
 	/** 网格级别约束 */
 	constraints?: LayoutConstraint[];

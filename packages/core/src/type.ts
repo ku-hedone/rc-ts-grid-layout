@@ -329,19 +329,19 @@ export interface DropConfig {
 	/** 是否可拖放外部元素到网格（默认: false） */
 	enabled: boolean;
 
-	/** 拖放项的默认尺寸（默认: { w: 1, h: 1 }） */
-	defaultItem: { w: number; h: number };
+	/** 拖放项的默认属性（默认: { w: 1, h: 1 }） */
+	defaultItem: { w: number; h: number; i?: string };
 
 	/**
 	 * 在网格上拖拽时调用
 	 * 返回尺寸以覆盖 defaultItem，或 false 以拒绝拖放
 	 * 也可以返回 dragOffsetX/dragOffsetY 以指定光标偏移量用于居中
 	 */
-	onDragOver?: (e: DragEvent) => { w?: number; h?: number; dragOffsetX?: number; dragOffsetY?: number } | false | void;
+	onDragOver?: (e: React.DragEvent<HTMLDivElement>) => { w?: number; h?: number; dragOffsetX?: number; dragOffsetY?: number } | false | void;
 }
 
 /** 默认拖放配置 */
 export const defaultDropConfig: DropConfig = {
 	enabled: false,
-	defaultItem: { w: 1, h: 1 },
+	defaultItem: { w: 1, h: 1, i: '__dropping-elem__' },
 };

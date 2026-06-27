@@ -5,8 +5,17 @@ import type {
 	Ref,
 	SyntheticEvent,
 } from 'react';
-import type { CompactType, Layout, LayoutConstraint, LayoutItem } from './type';
-import { ResizeHandle } from 'react-resizable';
+import type {
+	Compactor,
+	DragConfig,
+	DropConfig,
+	GridConfig,
+	Layout,
+	LayoutConstraint,
+	LayoutItem,
+	PositionStrategy,
+	ResizeConfig,
+} from './type';
 import { DraggableEvent } from 'react-draggable';
 
 export type DragNativeEvent = Parameters<DragEventHandler<HTMLDivElement>>[number];
@@ -14,11 +23,11 @@ export type DragNativeEvent = Parameters<DragEventHandler<HTMLDivElement>>[numbe
 export type DroppingPosition = { left: number; top: number; e: DragNativeEvent };
 
 type InnerHandler<T> = (
-	layout: Layout, // 布局数组
+	layout: Layout,
 	oldItem: LayoutItem | undefined,
 	newItem: LayoutItem | undefined,
 	placeholder: LayoutItem | undefined,
-	event: T, // 事件对象
+	event: T,
 	element?: HTMLElement,
 ) => void;
 
@@ -26,69 +35,66 @@ export type DragHandler = InnerHandler<DraggableEvent>;
 export type ResizeHandler = InnerHandler<SyntheticEvent>;
 
 export interface RGLProps {
+	/** 网格宽度（像素） */
 	width: number;
-	rowHeight?: number;
+
+	/** 布局数组 */
 	layout?: Layout;
-	margin?: [number, number];
-	preventCollision?: boolean;
-	useCSSTransforms?: boolean;
 
-	mergeStyle?: boolean;
-	attributes?: Pick<HTMLDivElement, 'id'>;
+	/** 子元素 */
+	children: ReactNode;
 
-	className?: string;
-	style?: CSSProperties;
-	autoSize?: boolean;
-	cols?: number;
-	draggableCancel?: string;
-	draggableHandle?: string;
-	verticalCompact?: boolean;
-	compactType?: CompactType;
-	containerPadding?: [number, number];
-	maxRows?: number;
-	isBounded?: boolean;
-	isDraggable?: boolean;
-	isResizable?: boolean;
-	isDroppable?: boolean;
+	// ─── 可组合配置 ───
 
-	transformScale?: number;
-	droppingItem?: Partial<LayoutItem>;
-	resizeHandles?: ResizeHandle[];
-	resizeHandle?: ResizeHandle;
-	allowOverlap?: boolean;
+	/** 网格测量配置（cols, rowHeight, margin, containerPadding, maxRows） */
+	gridConfig?: Partial<GridConfig>;
+
+	/** 拖拽行为配置（enabled, bounded, handle, cancel） */
+	dragConfig?: Partial<DragConfig>;
+
+	/** 缩放行为配置（enabled, handles, handleComponent） */
+	resizeConfig?: Partial<ResizeConfig>;
+
+	/** 外部拖放配置（enabled, defaultItem, onDragOver） */
+	dropConfig?: Partial<DropConfig>;
+
+	/** 布局压缩策略（替代 compactType + allowOverlap + preventCollision） */
+	compactor?: Compactor;
+
+	/** CSS 定位策略（替代 useCSSTransforms + transformScale） */
+	positionStrategy?: PositionStrategy;
+
+	/** 位置/尺寸约束数组（替代 isBounded） */
 	constraints?: LayoutConstraint[];
 
+	// ─── 回调 ───
+
 	onLayoutChange?: (layout: Layout) => void;
-	// 回调函数
 	onDrag?: DragHandler;
 	onDragStart?: DragHandler;
 	onDragStop?: DragHandler;
-
 	onResize?: ResizeHandler;
 	onResizeStart?: ResizeHandler;
 	onResizeStop?: ResizeHandler;
-
-	onDropDragOver?: ((e: DragNativeEvent) => { w?: number; h?: number } | false) | null;
 	onDrop?: (
 		layout: Layout,
 		item: LayoutItem | null | undefined,
 		e: DragNativeEvent,
 	) => void;
-	//
-	children: ReactNode;
+
+	// ─── 样式与 DOM ───
+
+	className?: string;
+	style?: CSSProperties;
+	autoSize?: boolean;
+	mergeStyle?: boolean;
 	innerRef?: Ref<HTMLDivElement>;
+	attributes?: Pick<HTMLDivElement, 'id'>;
 	/**
-	 * 当 `children` 中的某些 item 是提供 `ref` 操作能力的 React 组件时，
-	 * 它们的 `ref` 属性可能与实现 Draggable 功能所需的 `ref` 属性发生冲突。
-	 * 实现 Draggable 功能需要将 `ref` 绑定到包裹的元素节点上，
-	 * 以获取 item 最外层 HTML 标签的实时位置属性，并在位置变化时提供该元素的信息。
-	 *
-	 * 此时，可以使用 `wrapperProps` 来生成一个包装元素，用于绑定实现 Draggable 所需的 `ref`，
-	 * 以避免冲突。`wrapperProps` 还支持传入 `style` 和 `className` 以控制样式。
+	 * 包装元素 props，用于解决 ref 冲突。
+	 * 当 children 中的组件需要自己的 ref 时，使用 wrapperProps 生成包裹元素。
 	 */
 	wrapperProps?: {
-		// useCSSTransforms === true 时省略 'transform' | 'WebkitTransform' | 'MozTransform' | 'msTransform' | 'OTransform'
-		// useCSSTransforms === false 时省略 'top' | 'left'
 		style?: CSSProperties;
 		className?: string;
 	};
