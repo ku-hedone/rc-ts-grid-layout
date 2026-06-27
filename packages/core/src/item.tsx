@@ -420,7 +420,7 @@ interface WrapperProps extends Omit<ItemProps, 'children'> {
 }
 
 const Wrapper: FC<WrapperProps> = memo(
-	({ children, ...props }) => {
+	({ children, key: _key, ...props }) => {
 		const child = Children.only(children) as ItemProps['children'];
 		return <GridItem {...props}>{child}</GridItem>;
 	},
