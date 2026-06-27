@@ -651,7 +651,7 @@ const GridLayout: FC<RGLProps> = memo(
 					// 确定用户可执行的操作。
 					// 静态项默认不可操作。
 					// 直接定义在网格项上的属性优先级更高。
-					const { w, h, x, y, i, minH, minW, maxH, maxW } = item;
+					const { w, h, x, y, i, minH, minW, maxH, maxW, constraints: itemConstraints } = item;
 					const draggable =
 						typeof item.isDraggable === 'boolean'
 							? item.isDraggable
@@ -700,6 +700,8 @@ const GridLayout: FC<RGLProps> = memo(
 							resizeHandles={resizeHandlesOptions}
 							resizeHandle={resizeHandle}
 							constraints={constraints}
+							itemConstraints={itemConstraints}
+							layout={innerLayout}
 							wrapperProps={wrapperProps}>
 							{child}
 						</GridItem>

@@ -71,6 +71,8 @@ const GridItem = (props: ItemProps) => {
 		resizeHandle,
 		isBounded,
 		constraints = defaultConstraints,
+		itemConstraints,
+		layout: parentLayout,
 		children,
 		wrapperProps,
 	} = props;
@@ -129,9 +131,9 @@ const GridItem = (props: ItemProps) => {
 			rowHeight,
 			margin,
 			containerHeight: 0, // 由 containerBounds 约束使用，item 层不感知
-			layout: [], // item 层不感知完整布局，内置约束不依赖此字段
+			layout: parentLayout ?? [],
 		}),
-		[cols, containerWidth, margin, maxRows, rowHeight],
+		[cols, containerWidth, margin, maxRows, parentLayout, rowHeight],
 	);
 
 	const position = useMemo(() => {
@@ -192,7 +194,8 @@ const GridItem = (props: ItemProps) => {
 
 	const onGridDrag: InnerDragHandler = useCallback(
 		(e, { node, deltaX, deltaY }) => {
-			const { dragging } = innerState.current;
+			// 从 dragPositionRef 读取（每帧更新），而非 innerState.current.dragging（拖拽起点）
+			const dragging = dragPositionRef.current;
 			if (typeof onDrag === 'function' && dragging) {
 				let top = dragging.top + deltaY;
 				let left = dragging.left + deltaX;
@@ -213,7 +216,7 @@ const GridItem = (props: ItemProps) => {
 				dragPositionRef.current = { top, left };
 				let { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
 				// 应用位置约束
-				const itemLayout = { i, x, y, w, h };
+				const itemLayout = { i, x, y, w, h, constraints: itemConstraints };
 				const constrained = applyPositionConstraints(
 					constraints,
 					itemLayout,
@@ -257,6 +260,7 @@ const GridItem = (props: ItemProps) => {
 			h,
 			i,
 			isBounded,
+			itemConstraints,
 			onDrag,
 			useCSSTransforms,
 			usePercentages,
@@ -273,7 +277,7 @@ const GridItem = (props: ItemProps) => {
 				setDragging(void 0);
 				let { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
 				// 应用位置约束（确保最终位置合法）
-				const itemLayout = { i, x, y, w, h };
+				const itemLayout = { i, x, y, w, h, constraints: itemConstraints };
 				const constrained = applyPositionConstraints(
 					constraints,
 					itemLayout,
@@ -290,7 +294,7 @@ const GridItem = (props: ItemProps) => {
 				});
 			}
 		},
-		[constraintContext, constraints, h, i, onDragStop, w],
+		[constraintContext, constraints, h, i, itemConstraints, onDragStop, w],
 	);
 
 	const genResizeParams: GenResizeParams = useCallback(
@@ -318,7 +322,7 @@ const GridItem = (props: ItemProps) => {
 			w = clamp(w, Math.max(minW, 1), maxW);
 			h = clamp(h, minH, maxH);
 			// 再用 constraints 系统约束（覆盖更复杂的约束如 gridBounds、aspectRatio）
-			const itemLayout = { i, x, y, w: w, h: h };
+			const itemLayout = { i, x, y, w: w, h: h, constraints: itemConstraints };
 			const constrained = applySizeConstraints(
 				constraints,
 				itemLayout,
@@ -333,7 +337,7 @@ const GridItem = (props: ItemProps) => {
 				updatedSize,
 			};
 		},
-		[constraintContext, constraints, containerWidth, i, maxH, maxW, minH, minW, x, y],
+		[constraintContext, constraints, containerWidth, i, itemConstraints, maxH, maxW, minH, minW, x, y],
 	);
 
 	const onGridResize: GridInnerResizeHandler = useCallback(
