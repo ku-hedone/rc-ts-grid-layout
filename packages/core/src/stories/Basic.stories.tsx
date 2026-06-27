@@ -2,6 +2,7 @@
  * GridLayout 基础用法示例
  */
 
+import '../polyfill';
 import type { Story } from '@ladle/react';
 import { GridLayout } from '../index';
 import type { Layout } from '../type';
