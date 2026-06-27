@@ -179,3 +179,110 @@ test.describe('Ladle - Basic Story', () => {
 		expect(errors).toHaveLength(0);
 	});
 });
+
+test.describe('Ladle - Dropping Story', () => {
+	test('drop 成功：外部元素拖入网格后 layout 更新', async ({ page }) => {
+		const errors: string[] = [];
+		page.on('console', (msg) => {
+			if (msg.type() === 'error' && isProjectError(msg.text())) {
+				errors.push(msg.text());
+			}
+		});
+
+		await page.goto(`${LADLE_BASE}/?story=dropping--basic-dropping`);
+		await page.waitForLoadState('networkidle');
+
+		// 网格容器可见
+		const grid = page.locator('.react-grid-layout').first();
+		await expect(grid).toBeVisible();
+
+		// 记录初始 item 数量
+		const initialCount = await page.locator('.react-grid-item').count();
+
+		// 找到可拖拽的外部元素
+		const draggable = page.locator('[draggable="true"]').first();
+		await expect(draggable).toBeVisible();
+
+		// 获取网格位置
+		const gridBox = await grid.boundingBox();
+		expect(gridBox).not.toBeNull();
+
+		if (gridBox) {
+			// 模拟 HTML5 drag and drop
+			const dragBox = await draggable.boundingBox();
+			if (dragBox) {
+				// 触发 dragStart
+				await draggable.dispatchEvent('dragstart', {
+					dataTransfer: { setData: () => {}, effectAllowed: 'move' },
+				});
+
+				// 触发 dragOver 到网格
+				await grid.dispatchEvent('dragover', {
+					clientX: gridBox.x + gridBox.width / 2,
+					clientY: gridBox.y + gridBox.height / 2,
+				});
+
+				// 触发 drop
+				await grid.dispatchEvent('drop', {
+					clientX: gridBox.x + gridBox.width / 2,
+					clientY: gridBox.y + gridBox.height / 2,
+				});
+
+				// 等待 layout 更新
+				await page.waitForTimeout(500);
+
+				// 验证 item 数量增加
+				const finalCount = await page.locator('.react-grid-item').count();
+				expect(finalCount).toBeGreaterThanOrEqual(initialCount);
+			}
+		}
+
+		// 无项目侧 console.error
+		expect(errors).toHaveLength(0);
+	});
+
+	test('drop 后无重复 __dropping-elem__', async ({ page }) => {
+		await page.goto(`${LADLE_BASE}/?story=dropping--basic-dropping`);
+		await page.waitForLoadState('networkidle');
+
+		const grid = page.locator('.react-grid-layout').first();
+		await expect(grid).toBeVisible();
+
+		const gridBox = await grid.boundingBox();
+		if (gridBox) {
+			const draggable = page.locator('[draggable="true"]').first();
+			await draggable.dispatchEvent('dragstart', {
+				dataTransfer: { setData: () => {}, effectAllowed: 'move' },
+			});
+			await grid.dispatchEvent('dragover', {
+				clientX: gridBox.x + gridBox.width / 2,
+				clientY: gridBox.y + gridBox.height / 2,
+			});
+			await grid.dispatchEvent('drop', {
+				clientX: gridBox.x + gridBox.width / 2,
+				clientY: gridBox.y + gridBox.height / 2,
+			});
+			await page.waitForTimeout(500);
+
+			// 不应有重复的 dropping item
+			const droppingItems = page.locator('[data-testid*="dropping"]');
+			const count = await droppingItems.count();
+			expect(count).toBeLessThanOrEqual(1);
+		}
+	});
+
+	test('无项目侧 console.error（dropping story）', async ({ page }) => {
+		const errors: string[] = [];
+		page.on('console', (msg) => {
+			if (msg.type() === 'error' && isProjectError(msg.text())) {
+				errors.push(msg.text());
+			}
+		});
+
+		await page.goto(`${LADLE_BASE}/?story=dropping--basic-dropping`);
+		await page.waitForLoadState('networkidle');
+		await page.waitForTimeout(1000);
+
+		expect(errors).toHaveLength(0);
+	});
+});

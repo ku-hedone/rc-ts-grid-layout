@@ -24,7 +24,7 @@ import {
 import { getCompactor } from './compactors';
 import GridItem from './item';
 import { deepEqual } from './equals';
-import { calcXY } from './calculate';
+import { calcXY, calcGridColWidth, calcGridItemWHPx } from './calculate';
 import { flushSync } from 'react-dom';
 import { layoutClassName } from './constant';
 import './grid.css';
@@ -233,6 +233,8 @@ const GridLayout: FC<RGLProps> = memo(
 		// 当 layout 或 children 更新时
 		// 移除占位元素
 		const removeDroppingPlaceholder = useCallback(() => {
+			// 幂等：如果 droppingDOM 不存在，说明已经移除过
+			if (!droppingDOM.current) return;
 			const nextLayout = innerCompactor.compact(
 				innerLayout.filter((l) => l.i !== droppingItem.i),
 				cols,
@@ -276,7 +278,8 @@ const GridLayout: FC<RGLProps> = memo(
 		const onInnerDragLeave: DragHandler = useCallback(
 			(e) => {
 				preventBrowserNativeAction(e);
-				dragEnterCount.current--;
+				// 防止计数器为负（浏览器事件异常时可能出现）
+				dragEnterCount.current = Math.max(0, dragEnterCount.current - 1);
 				// onDragLeave 会在布局的每个子元素上触发。
 				// 但 dragEnter 和 dragLeave 事件的触发次数
 				// 在离开布局容器后会保持平衡，
@@ -323,6 +326,21 @@ const GridLayout: FC<RGLProps> = memo(
 					};
 					if (!droppingDOM.current) {
 						if (typeof w !== 'undefined' && typeof h !== 'undefined') {
+							// 居中放置：偏移半个 item 尺寸
+							const colWidth = calcGridColWidth({
+								cols,
+								containerPadding,
+								containerWidth: width,
+								margin,
+								maxRows,
+								rowHeight,
+							});
+							const margin0 = Number(margin[0]) || 10;
+							const margin1 = Number(margin[1]) || 10;
+							const itemW = calcGridItemWHPx(w, colWidth, margin0);
+							const itemH = calcGridItemWHPx(h, rowHeight, margin1);
+							const centeredX = layerX - itemW / 2;
+							const centeredY = layerY - itemH / 2;
 							const calcPosition = calcXY(
 								{
 									cols,
@@ -332,15 +350,16 @@ const GridLayout: FC<RGLProps> = memo(
 									containerWidth: width,
 									containerPadding,
 								},
-								layerY,
-								layerX,
+								centeredY,
+								centeredX,
 								w,
 								h,
 							);
 							droppingDOM.current = <div key={`drop-dom-${dropItem.i}`} />;
 							setDroppingPosition(position);
 							setInnerLayout((prev) => [
-								...prev,
+								// 过滤掉旧的 dropping item，防止 batched state 造成重复
+								...prev.filter((l) => l.i !== dropItem.i),
 								{
 									...dropItem,
 									w,
