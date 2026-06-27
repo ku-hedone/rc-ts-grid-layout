@@ -101,6 +101,7 @@ const GridLayout: FC<RGLProps> = memo(
 		onResizeStop = noop,
 		mergeStyle = false,
 		attributes = {},
+		constraints,
 		wrapperProps,
 	}) => {
 		/**
@@ -698,6 +699,7 @@ const GridLayout: FC<RGLProps> = memo(
 							droppingPosition={isDrop ? droppingPosition : undefined}
 							resizeHandles={resizeHandlesOptions}
 							resizeHandle={resizeHandle}
+							constraints={constraints}
 							wrapperProps={wrapperProps}>
 							{child}
 						</GridItem>

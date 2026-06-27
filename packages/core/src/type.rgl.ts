@@ -5,7 +5,7 @@ import type {
 	Ref,
 	SyntheticEvent,
 } from 'react';
-import type { CompactType, Layout, LayoutItem } from './type';
+import type { CompactType, Layout, LayoutConstraint, LayoutItem } from './type';
 import { ResizeHandle } from 'react-resizable';
 import { DraggableEvent } from 'react-draggable';
 
@@ -56,6 +56,7 @@ export interface RGLProps {
 	resizeHandles?: ResizeHandle[];
 	resizeHandle?: ResizeHandle;
 	allowOverlap?: boolean;
+	constraints?: LayoutConstraint[];
 
 	onLayoutChange?: (layout: Layout) => void;
 	// 回调函数

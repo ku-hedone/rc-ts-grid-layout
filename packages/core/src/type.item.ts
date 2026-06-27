@@ -2,7 +2,7 @@ import type { CSSProperties, SyntheticEvent, ReactElement } from 'react';
 import type { ResizableProps, ResizeCallbackData, ResizeHandle } from 'react-resizable';
 import type { DroppingPosition, RGLProps } from './type.rgl';
 import type { DraggableEvent, DraggableData } from 'react-draggable';
-import type { Position } from './type';
+import type { LayoutConstraint, Position } from './type';
 
 type GridDragEvent = {
 	e: DraggableEvent;
@@ -66,6 +66,7 @@ export interface ItemProps extends Pick<RGLProps, 'wrapperProps'> {
 
 	resizeHandles?: ResizeHandle[];
 	resizeHandle?: ResizableProps['handle'];
+	constraints?: LayoutConstraint[];
 	/**
 	 * Each drag movement create a new dragelement and move the element to the dragged location
 	 * @param {String} i Id of the child

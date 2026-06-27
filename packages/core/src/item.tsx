@@ -14,6 +14,7 @@ import { fastGridItemPropsEqual, resizeItemInDirection } from './utils';
 import { calcGridItemWHPx, calcGridColWidth, calcWH, clamp, calcXY } from './calculate';
 import { calcGridItemPosition, createStyle } from './utils.item';
 import { deepEqual } from './equals';
+import { defaultConstraints, applyPositionConstraints, applySizeConstraints } from './constraints';
 import type { CSSProperties, FC, ReactElement, ReactNode, Ref } from 'react';
 import type {
 	Dragging,
@@ -25,7 +26,7 @@ import type {
 	ItemProps,
 	Resizing,
 } from './type.item';
-import type { PartialPosition, Position } from './type';
+import type { ConstraintContext, LayoutConstraint, PartialPosition, Position } from './type';
 import type { DroppingPosition } from './type.rgl';
 
 type GridChildProps = {
@@ -69,6 +70,7 @@ const GridItem = (props: ItemProps) => {
 		resizeHandles,
 		resizeHandle,
 		isBounded,
+		constraints = defaultConstraints,
 		children,
 		wrapperProps,
 	} = props;
@@ -79,6 +81,8 @@ const GridItem = (props: ItemProps) => {
 	const prevDropPosition = useRef<DroppingPosition | undefined>(undefined);
 
 	const currentPosition = useRef<Position | undefined>(undefined);
+	// 拖拽实时位置（ref 驱动，避免每帧触发 React re-render）
+	const dragPositionRef = useRef<Dragging | undefined>(undefined);
 
 	const cls = useMemo(
 		() =>
@@ -115,6 +119,20 @@ const GridItem = (props: ItemProps) => {
 			rowHeight,
 		};
 	}, [cols, containerPadding, containerWidth, margin, maxRows, rowHeight]);
+
+	// 约束上下文（供 constraints 系统使用）
+	const constraintContext = useMemo<ConstraintContext>(
+		() => ({
+			cols,
+			maxRows,
+			containerWidth,
+			rowHeight,
+			margin,
+			containerHeight: 0, // 由 containerBounds 约束使用，item 层不感知
+			layout: [], // item 层不感知完整布局，内置约束不依赖此字段
+		}),
+		[cols, containerWidth, margin, maxRows, rowHeight],
+	);
 
 	const position = useMemo(() => {
 		const state = resizing ? { resizing } : dragging ? { dragging } : void 0;
@@ -153,6 +171,7 @@ const GridItem = (props: ItemProps) => {
 						offsetParent.scrollLeft,
 				};
 				setDragging(position);
+				dragPositionRef.current = position;
 				// 使用此数据调用回调
 				const { x, y } = calcXY(
 					innerProps.current.positionParams,
@@ -190,8 +209,40 @@ const GridItem = (props: ItemProps) => {
 						left = clamp(left, 0, rightBoundary);
 					}
 				}
-				setDragging({ top, left });
-				const { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
+				// ref 驱动：更新 ref + 直接操作 DOM，不触发 React re-render
+				dragPositionRef.current = { top, left };
+				let { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
+				// 应用位置约束
+				const itemLayout = { i, x, y, w, h };
+				const constrained = applyPositionConstraints(
+					constraints,
+					itemLayout,
+					x,
+					y,
+					constraintContext,
+				);
+				x = constrained.x;
+				y = constrained.y;
+				// 直接更新 DOM style（跳过 React 渲染链）
+				const pos = calcGridItemPosition(
+					innerProps.current.positionParams,
+					x,
+					y,
+					w,
+					h,
+					{ dragging: { top, left } },
+				);
+				const el = ref.current;
+				if (el) {
+					Object.assign(
+						el.style,
+						createStyle(pos, {
+							containerWidth,
+							usePercentages,
+							useCSSTransforms,
+						}),
+					);
+				}
 				onDrag(i, x, y, {
 					e,
 					node,
@@ -199,16 +250,39 @@ const GridItem = (props: ItemProps) => {
 				});
 			}
 		},
-		[h, i, isBounded, onDrag, w],
+		[
+			constraintContext,
+			constraints,
+			containerWidth,
+			h,
+			i,
+			isBounded,
+			onDrag,
+			useCSSTransforms,
+			usePercentages,
+			w,
+		],
 	);
 
 	const onGridDragStop: InnerDragStopHandler = useCallback(
 		(e, { node }) => {
-			const { dragging } = innerState.current;
-			if (typeof onDragStop === 'function' && dragging) {
-				const { left, top } = dragging;
+			const dragPos = dragPositionRef.current ?? innerState.current.dragging;
+			if (typeof onDragStop === 'function' && dragPos) {
+				const { left, top } = dragPos;
+				dragPositionRef.current = void 0;
 				setDragging(void 0);
-				const { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
+				let { x, y } = calcXY(innerProps.current.positionParams, top, left, w, h);
+				// 应用位置约束（确保最终位置合法）
+				const itemLayout = { i, x, y, w, h };
+				const constrained = applyPositionConstraints(
+					constraints,
+					itemLayout,
+					x,
+					y,
+					constraintContext,
+				);
+				x = constrained.x;
+				y = constrained.y;
 				onDragStop(i, x, y, {
 					e,
 					node,
@@ -216,7 +290,7 @@ const GridItem = (props: ItemProps) => {
 				});
 			}
 		},
-		[h, i, onDragStop, w],
+		[constraintContext, constraints, h, i, onDragStop, w],
 	);
 
 	const genResizeParams: GenResizeParams = useCallback(
@@ -232,7 +306,7 @@ const GridItem = (props: ItemProps) => {
 					containerWidth,
 				);
 			}
-			const { w, h } = calcWH(
+			let { w, h } = calcWH(
 				innerProps.current.positionParams,
 				updatedSize.width,
 				updatedSize.height,
@@ -240,13 +314,26 @@ const GridItem = (props: ItemProps) => {
 				y,
 				handle,
 			);
+			// 先用 clamp 兼容旧逻辑
+			w = clamp(w, Math.max(minW, 1), maxW);
+			h = clamp(h, minH, maxH);
+			// 再用 constraints 系统约束（覆盖更复杂的约束如 gridBounds、aspectRatio）
+			const itemLayout = { i, x, y, w: w, h: h };
+			const constrained = applySizeConstraints(
+				constraints,
+				itemLayout,
+				w,
+				h,
+				handle,
+				constraintContext,
+			);
 			return {
-				w: clamp(w, Math.max(minW, 1), maxW),
-				h: clamp(h, minH, maxH),
+				w: constrained.w,
+				h: constrained.h,
 				updatedSize,
 			};
 		},
-		[containerWidth, maxH, maxW, minH, minW, x, y],
+		[constraintContext, constraints, containerWidth, i, maxH, maxW, minH, minW, x, y],
 	);
 
 	const onGridResize: GridInnerResizeHandler = useCallback(
@@ -323,19 +410,20 @@ const GridItem = (props: ItemProps) => {
 		const node = ref.current;
 		if (!node) return;
 		const prevDroppingPosition = prevDropPosition.current || { left: 0, top: 0 };
-		// 修复运算符优先级：应该在 dragging 存在时才检查位置变化
+		// 从 ref 读取当前拖拽状态，避免 dragging 作为依赖导致循环
+		const currentDragging = dragPositionRef.current ?? innerState.current.dragging;
 		const shouldDrag =
-			dragging &&
+			currentDragging &&
 			(droppingPosition.left !== prevDroppingPosition.left ||
 				droppingPosition.top !== prevDroppingPosition.top);
 
-		if (!dragging) {
+		if (!currentDragging) {
 			onGridDragStart(droppingPosition.e, {
 				node,
 			});
 		} else if (shouldDrag) {
-			const deltaX = droppingPosition.left - dragging.left;
-			const deltaY = droppingPosition.top - dragging.top;
+			const deltaX = droppingPosition.left - currentDragging.left;
+			const deltaY = droppingPosition.top - currentDragging.top;
 			onGridDrag(droppingPosition.e, {
 				node,
 				deltaX,
@@ -343,7 +431,7 @@ const GridItem = (props: ItemProps) => {
 			});
 		}
 		prevDropPosition.current = droppingPosition;
-	}, [dragging, droppingPosition, onGridDrag, onGridDragStart]);
+	}, [droppingPosition, onGridDrag, onGridDragStart]);
 
 	const innerCancel = useMemo(
 		() => `.react-resizable-handle ${cancel ? ',' + cancel : ''}`.trim(),
