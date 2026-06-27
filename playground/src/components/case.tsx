@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
-import { ResizeGridLayout, collides } from '@hedone/rc-ts-grid-layout';
+import { ResizeGridLayout, collides, horizontalCompactor } from '@hedone/rc-ts-grid-layout';
 import type { Layout, LayoutItem } from '@hedone/rc-ts-grid-layout/typings/type';
 
 const items = 2;
@@ -125,10 +125,9 @@ const Case = () => {
 				className="layout"
 				layout={state}
 				onLayoutChange={onInnerLayoutChange}
-				rowHeight={50}
-				cols={12}
-				resizeHandles={resizeHandles}
-				compactType="horizontal">
+				gridConfig={{ cols: 12, rowHeight: 50 }}
+				resizeConfig={{ handles: resizeHandles }}
+				compactor={horizontalCompactor}>
 				{gen()}
 			</ResizeGridLayout>
 		</div>
