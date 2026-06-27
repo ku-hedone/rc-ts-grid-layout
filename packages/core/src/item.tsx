@@ -287,6 +287,26 @@ const GridItem = (props: ItemProps) => {
 				);
 				x = constrained.x;
 				y = constrained.y;
+				// 恢复 DOM style 到非拖拽的正确位置
+				// onGridDrag 直接写入了 DOM，React 可能不会重写（style 值未变时跳过）
+				const finalPos = calcGridItemPosition(
+					innerProps.current.positionParams,
+					x,
+					y,
+					w,
+					h,
+				);
+				const el = ref.current;
+				if (el) {
+					Object.assign(
+						el.style,
+						createStyle(finalPos, {
+							containerWidth,
+							usePercentages,
+							useCSSTransforms,
+						}),
+					);
+				}
 				onDragStop(i, x, y, {
 					e,
 					node,
@@ -294,7 +314,18 @@ const GridItem = (props: ItemProps) => {
 				});
 			}
 		},
-		[constraintContext, constraints, h, i, itemConstraints, onDragStop, w],
+		[
+			constraintContext,
+			constraints,
+			containerWidth,
+			h,
+			i,
+			itemConstraints,
+			onDragStop,
+			useCSSTransforms,
+			usePercentages,
+			w,
+		],
 	);
 
 	const genResizeParams: GenResizeParams = useCallback(

@@ -123,6 +123,7 @@ export const fastRGLPropsEqual = (
 		isEqualImpl(a.resizeHandles, b.resizeHandles) &&
 		isEqualImpl(a.layout, b.layout) &&
 		isEqualImpl(a.margin, b.margin) &&
+		isEqualImpl(a.constraints, b.constraints) &&
 		// 对象类型
 		isEqualImpl(a.resizeHandle, b.resizeHandle) &&
 		isEqualImpl(a.style, b.style) &&
@@ -226,6 +227,9 @@ export const fastGridItemPropsEqual = (
 		// 数组类型
 		isEqualImpl(prev.resizeHandles, next.resizeHandles) &&
 		isEqualImpl(prev.containerPadding, next.containerPadding) &&
-		isEqualImpl(prev.margin, next.margin)
+		isEqualImpl(prev.margin, next.margin) &&
+		isEqualImpl(prev.constraints, next.constraints) &&
+		isEqualImpl(prev.itemConstraints, next.itemConstraints) &&
+		isEqualImpl(prev.layout, next.layout)
 	);
 };

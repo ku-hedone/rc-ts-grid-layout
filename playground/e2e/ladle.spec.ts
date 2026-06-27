@@ -6,10 +6,10 @@
  * Story URL 格式：/?story=<category>--<story>
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 
 // Ladle 默认端口
-const LADLE_BASE = 'http://localhost:61000';
+const LADLE_BASE = process.env.LADLE_BASE ?? 'http://localhost:61000';
 
 // 已知的 Ladle 外部警告（不作为项目失败条件）
 const KNOWN_EXTERNAL_WARNINGS = [
@@ -22,6 +22,17 @@ const KNOWN_EXTERNAL_WARNINGS = [
 
 function isProjectError(text: string): boolean {
 	return !KNOWN_EXTERNAL_WARNINGS.some((w) => text.includes(w));
+}
+
+async function getTranslate(locator: Locator): Promise<{ x: number; y: number }> {
+	return locator.evaluate((element) => {
+		const transform = getComputedStyle(element).transform;
+		if (!transform || transform === 'none') {
+			return { x: 0, y: 0 };
+		}
+		const matrix = new DOMMatrixReadOnly(transform);
+		return { x: matrix.m41, y: matrix.m42 };
+	});
 }
 
 test.describe('Ladle - Basic Story', () => {
@@ -86,6 +97,68 @@ test.describe('Ladle - Basic Story', () => {
 				expect(moved).toBe(true);
 			}
 		}
+	});
+
+	test('多步拖拽累计位移，不只使用最后一帧 delta', async ({ page }) => {
+		const item = page.locator('.react-grid-item').first();
+		await expect(item).toBeVisible();
+
+		const box = await item.boundingBox();
+		expect(box).not.toBeNull();
+		if (!box) return;
+
+		const initial = await getTranslate(item);
+		const startX = box.x + box.width / 2;
+		const startY = box.y + box.height / 2;
+		const totalX = 150;
+		const totalY = 60;
+		const steps = 10;
+
+		await page.mouse.move(startX, startY);
+		await page.mouse.down();
+		for (let i = 1; i <= steps; i++) {
+			await page.mouse.move(
+				startX + (totalX * i) / steps,
+				startY + (totalY * i) / steps,
+			);
+		}
+
+		const during = await getTranslate(item);
+		expect(during.x - initial.x).toBeGreaterThan(totalX * 0.8);
+		expect(during.y - initial.y).toBeGreaterThan(totalY * 0.8);
+
+		await page.mouse.up();
+	});
+
+	test('maxRows 约束拒绝越界拖拽后恢复到合法 DOM 位置', async ({ page }) => {
+		await page.goto(`${LADLE_BASE}/?story=basic--max-rows`);
+		await page.waitForLoadState('networkidle');
+
+		const item = page.locator('.react-grid-item').first();
+		await expect(item).toBeVisible();
+
+		const box = await item.boundingBox();
+		expect(box).not.toBeNull();
+		if (!box) return;
+
+		const initial = await getTranslate(item);
+		const startX = box.x + box.width / 2;
+		const startY = box.y + box.height / 2;
+
+		await page.mouse.move(startX, startY);
+		await page.mouse.down();
+		await page.mouse.move(startX, startY + 200);
+
+		const during = await getTranslate(item);
+		expect(during.y - initial.y).toBeGreaterThan(150);
+
+		await page.mouse.up();
+		await page.waitForTimeout(500);
+
+		const final = await getTranslate(item);
+		// maxRows=4 且 item 高度为 2 行，最终最大 y=2；
+		// rowHeight=30, marginY=10, 初始 y=0，所以最终像素偏移为 2 * (30 + 10) = 80。
+		expect(Math.round(final.y - initial.y)).toBe(80);
 	});
 
 	test('无项目侧 console.error', async ({ page }) => {
